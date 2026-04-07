@@ -2,7 +2,6 @@
   margin: 0;
 }
 
-/* ---------------- Navbar ---------------- */
 
 .navbar {
   display: flex;
@@ -39,7 +38,6 @@
   border: none;
 }
 
-/* ------------------  Home Page ------------------- */
 
 .hero {
   height: 90vh;
@@ -116,5 +114,3 @@
   border: none;
   border-radius: 8px;
 }
-
-/* ----------------  ---------------- */
