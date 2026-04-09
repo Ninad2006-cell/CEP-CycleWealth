@@ -7,8 +7,158 @@
 /* Main Content Container */
 .scrap-dealer-main {
   padding: 40px;
-  background: linear-gradient(to right, #c8f7dc, #9be7c4);
-  min-height: calc(100vh - 70px);
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 50%, #a5d6a7 100%);
+  min-height: calc(100vh - 52px);
+}
+
+/* Loading & Error States */
+.loading-container,
+.error-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 52px);
+}
+
+.loading-spinner {
+  text-align: center;
+  padding: 40px;
+}
+
+.spinner {
+  width: 60px;
+  height: 60px;
+  border: 4px solid #e8f5e9;
+  border-top-color: #0f9d58;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-spinner p {
+  color: #0f9d58;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.error-card {
+  background: white;
+  padding: 50px;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+}
+
+.error-icon {
+  font-size: 64px;
+  display: block;
+  margin-bottom: 20px;
+}
+
+.error-card h3 {
+  color: #333;
+  font-size: 24px;
+  margin-bottom: 12px;
+}
+
+.error-card p {
+  color: #666;
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #0f9d58, #34d399);
+  color: white;
+  border: none;
+  padding: 14px 32px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(15, 157, 88, 0.3);
+}
+
+/* Welcome Banner */
+.welcome-banner {
+  background: linear-gradient(135deg, #0f9d58, #34d399);
+  border-radius: 20px;
+  padding: 30px 40px;
+  margin-bottom: 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  box-shadow: 0 10px 30px rgba(15, 157, 88, 0.2);
+}
+
+.welcome-content h1 {
+  color: white;
+  font-size: 28px;
+  margin: 0 0 8px 0;
+  font-weight: 700;
+}
+
+.welcome-content p {
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+  font-size: 16px;
+}
+
+.quick-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.quick-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.quick-action-btn span {
+  font-size: 18px;
+}
+
+.quick-action-btn.primary {
+  background: white;
+  color: #0f9d58;
+}
+
+.quick-action-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.quick-action-btn.secondary {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.quick-action-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
 }
 
 /* Container */
@@ -57,6 +207,42 @@
   font-weight: 500;
 }
 
+.role-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #0f9d58, #34d399);
+  color: white;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+/* Profile Section */
+.profile-section {
+  margin-bottom: 30px;
+}
+.profile-card {
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+/* Section Title */
+.section-title {
+  color: #0f9d58;
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
 /* Profile Info Grid */
 .dealer-info-grid {
   display: grid;
@@ -82,11 +268,66 @@
   font-size: 14px;
 }
 
+.profile-info-item span.info-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
 .profile-info-item p {
-  margin: 5px 0 0 0;
+  margin: 0;
   font-weight: 600;
   color: #333;
+  font-size: 16px;
+}
+
+/* Empty State Card */
+.empty-state-card {
+  background: white;
+  border-radius: 20px;
+  padding: 50px;
+  text-align: center;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  margin-top: 30px;
+}
+
+.empty-icon {
+  font-size: 64px;
+  display: block;
+  margin-bottom: 20px;
+}
+
+.empty-state-card h3 {
+  color: #333;
+  font-size: 22px;
+  margin-bottom: 12px;
+}
+
+.empty-state-card p {
+  color: #666;
+  margin-bottom: 24px;
   font-size: 15px;
+}
+
+/* View All Button */
+.view-all-btn {
+  background: transparent;
+  color: #0f9d58;
+  border: 2px solid #0f9d58;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.view-all-btn:hover {
+  background: #0f9d58;
+  color: white;
+  transform: translateY(-2px);
 }
 
 /* Section Title */
@@ -325,10 +566,27 @@
   border-bottom: none;
 }
 
+.transaction-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.material-type {
+  font-weight: 600;
+  font-size: 15px;
+  color: #333;
+}
+
+.transaction-date {
+  font-size: 13px;
+  color: #999;
+}
+
 .transaction-weight {
   font-weight: bold;
   font-size: 16px;
-  padding: 6px 12px;
+  padding: 8px 16px;
   border-radius: 20px;
   background-color: #f0f0f0;
 }
@@ -398,187 +656,146 @@
     text-align: center;
     align-items: center;
   }
-
   .dealer-info-grid {
     grid-template-columns: 1fr;
   }
-
   .stats-grid {
     grid-template-columns: 1fr;
     gap: 15px;
   }
-
   .stat-card {
     padding: 15px;
   }
-
   .stat-value {
     font-size: 24px;
   }
-
   .stat-label {
     font-size: 12px;
   }
-
   .chart-container {
     padding: 15px;
     margin-top: 20px;
   }
-
   .chart-title {
     font-size: 16px;
     margin-bottom: 15px;
   }
-
   .status-overview {
     padding: 15px;
   }
-
   .status-item {
     padding: 15px;
     min-width: auto;
   }
-
   .status-icon {
     font-size: 36px;
   }
-
   .status-value {
     font-size: 18px;
   }
-
   .status-name {
     font-size: 12px;
   }
-
   .status-percentage {
     font-size: 11px;
   }
-
   .status-arrow {
     font-size: 20px;
     display: none;
   }
-
   .dealer-avatar {
     width: 60px;
     height: 60px;
     font-size: 24px;
   }
-
   .dealer-title h2 {
     font-size: 18px;
   }
-
   .transactions-section {
     padding: 15px;
   }
-
   .transactions-title {
     font-size: 16px;
   }
-
   .transaction-item {
     padding: 10px 15px;
     flex-wrap: wrap;
   }
-
   .transaction-weight {
     font-size: 14px;
     padding: 4px 10px;
   }
 }
-
 @media (max-width: 480px) {
   .scrap-dealer-main {
     padding: 10px;
   }
-
   .dealer-avatar {
     width: 50px;
     height: 50px;
     font-size: 20px;
   }
-
   .dealer-title h2 {
     font-size: 16px;
   }
-
   .section-title {
     font-size: 16px;
     margin-bottom: 15px;
   }
-
   .stats-grid {
     grid-template-columns: 1fr;
     gap: 10px;
   }
-
   .stat-card {
     padding: 12px;
   }
-
   .stat-value {
     font-size: 20px;
   }
-
   .stat-label {
     font-size: 11px;
   }
-
   .chart-container {
     padding: 10px;
     margin-top: 15px;
   }
-
   .charts-grid {
     gap: 15px;
   }
-
   .chart-title {
     font-size: 14px;
     margin-bottom: 10px;
   }
-
   .status-overview {
     padding: 10px;
   }
-
   .status-item {
     padding: 10px;
     gap: 10px;
   }
-
   .status-icon {
     font-size: 28px;
     padding: 8px;
   }
-
   .status-value {
     font-size: 16px;
   }
-
   .status-name {
     font-size: 11px;
   }
-
   .status-percentage {
     font-size: 10px;
   }
-
   .progress-container {
     margin-top: 20px;
   }
-
   .progress-label {
     font-size: 12px;
   }
-
   .transaction-item {
     padding: 8px 12px;
     font-size: 13px;
   }
-
   .transactions-title {
     font-size: 14px;
   }

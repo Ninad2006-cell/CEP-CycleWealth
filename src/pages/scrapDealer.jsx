@@ -134,11 +134,23 @@ function ScrapDealer() {
         navigate('/login');
     };
 
+    const handleAddCollection = () => {
+        navigate('/scrapflow');
+    };
+
+    const handleViewConnections = () => {
+        navigate('/connections');
+    };
+
     if (loading) {
         return (
             <div className="scrap-dealer-page">
-                <div className="scrap-dealer-main" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    <p>Loading...</p>
+                <SharedNavbar user={currentUser} />
+                <div className="scrap-dealer-main loading-container">
+                    <div className="loading-spinner">
+                        <div className="spinner"></div>
+                        <p>Loading your dashboard...</p>
+                    </div>
                 </div>
             </div>
         );
@@ -147,9 +159,16 @@ function ScrapDealer() {
     if (error) {
         return (
             <div className="scrap-dealer-page">
-                <div className="scrap-dealer-main" style={{ textAlign: 'center', padding: '40px' }}>
-                    <p style={{ color: 'red' }}>{error}</p>
-                    <button onClick={() => navigate('/login')} className="login">Go to Login</button>
+                <SharedNavbar user={currentUser} />
+                <div className="scrap-dealer-main error-container">
+                    <div className="error-card">
+                        <span className="error-icon">⚠️</span>
+                        <h3>Oops! Something went wrong</h3>
+                        <p>{error}</p>
+                        <button onClick={() => navigate('/login')} className="btn-primary">
+                            Go to Login
+                        </button>
+                    </div>
                 </div>
             </div>
         );
@@ -158,9 +177,16 @@ function ScrapDealer() {
     if (!profile) {
         return (
             <div className="scrap-dealer-page">
-                <div className="scrap-dealer-main" style={{ textAlign: 'center', padding: '40px' }}>
-                    <p>No profile data found. Please log in again.</p>
-                    <button onClick={() => navigate('/login')} className="login">Go to Login</button>
+                <SharedNavbar user={currentUser} />
+                <div className="scrap-dealer-main error-container">
+                    <div className="error-card">
+                        <span className="error-icon">👤</span>
+                        <h3>No Profile Data</h3>
+                        <p>Please log in again to access your dashboard.</p>
+                        <button onClick={() => navigate('/login')} className="btn-primary">
+                            Go to Login
+                        </button>
+                    </div>
                 </div>
             </div>
         );
@@ -171,38 +197,53 @@ function ScrapDealer() {
             <SharedNavbar user={currentUser} />
             <div className="scrap-dealer-main">
                 <div className="scrap-dealer-container">
-                    {/* Profile Section */}
-                    <div className="dealer-section">
-                        <div className="dealer-header">
-                            <div className="dealer-avatar">
-                                {profile.firstName?.charAt(0)}{profile.lastName?.charAt(0)}
-                            </div>
-                            <div className="dealer-title">
-                                <h2>{profile.businessName}</h2>
-                                <p>{profile.role}</p>
-                            </div>
+                    {/* Welcome Banner */}
+                    <div className="welcome-banner">
+                        <div className="welcome-content">
+                            <h1>Welcome back, {profile.firstName}! 👋</h1>
+                            <p>Manage your scrap collection and track your recycling progress</p>
                         </div>
+                        <div className="quick-actions">
+                            <button className="quick-action-btn primary" onClick={handleViewConnections}>
+                                <span>➕</span>
+                                Add Collection
+                            </button>
+                            <button className="quick-action-btn secondary" onClick={handleViewConnections}>
+                                <span>🔗</span>
+                                Connections
+                            </button>
+                        </div>
+                    </div>
 
-                        <div className="dealer-info-grid">
-                            <div className="profile-info-item">
-                                <span>First Name</span>
-                                <p>{profile.firstName}</p>
+                    {/* Profile Section */}
+                    <div className="dealer-section profile-section">
+                        <div className="section-header">
+                            <h2 className="section-title">🏪 Business Profile</h2>
+                        </div>
+                        <div className="profile-card">
+                            <div className="dealer-header">
+                                <div className="dealer-avatar">
+                                    {profile.firstName?.charAt(0)}{profile.lastName?.charAt(0)}
+                                </div>
+                                <div className="dealer-title">
+                                    <h2>{profile.businessName}</h2>
+                                    <p className="role-badge">{profile.role}</p>
+                                </div>
                             </div>
-                            <div className="profile-info-item">
-                                <span>Last Name</span>
-                                <p>{profile.lastName}</p>
-                            </div>
-                            <div className="profile-info-item">
-                                <span>Email</span>
-                                <p>{profile.email}</p>
-                            </div>
-                            <div className="profile-info-item">
-                                <span>Role</span>
-                                <p>{profile.role}</p>
-                            </div>
-                            <div className="profile-info-item">
-                                <span>Member Since</span>
-                                <p>{profile.joinedDate}</p>
+
+                            <div className="dealer-info-grid">
+                                <div className="profile-info-item">
+                                    <span className="info-label">📧 Email</span>
+                                    <p>{profile.email}</p>
+                                </div>
+                                <div className="profile-info-item">
+                                    <span className="info-label">📅 Member Since</span>
+                                    <p>{profile.joinedDate}</p>
+                                </div>
+                                <div className="profile-info-item">
+                                    <span className="info-label">♻️ Total Collections</span>
+                                    <p>{transactions.length} transactions</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -334,19 +375,38 @@ function ScrapDealer() {
                         )}
 
                         {/* Recent Transactions */}
-                        {transactions.length > 0 && (
+                        {transactions.length > 0 ? (
                             <div className="transactions-section">
-                                <h3 className="transactions-title">Recent Transactions</h3>
+                                <div className="section-header">
+                                    <h3 className="transactions-title">📋 Recent Transactions</h3>
+                                    <button className="view-all-btn" onClick={() => navigate('/transactions')}>
+                                        View All →
+                                    </button>
+                                </div>
                                 <div className="transactions-list">
                                     {transactions.slice(0, 5).map((transaction, index) => (
                                         <div key={index} className="transaction-item">
-                                            <span>{transaction.material_type || 'Unknown Material'}</span>
+                                            <div className="transaction-info">
+                                                <span className="material-type">{transaction.material_type || 'Unknown Material'}</span>
+                                                <span className="transaction-date">
+                                                    {new Date(transaction.created_at).toLocaleDateString()}
+                                                </span>
+                                            </div>
                                             <span className={`transaction-weight ${transaction.status}`}>
                                                 {transaction.weight_kg} kg
                                             </span>
                                         </div>
                                     ))}
                                 </div>
+                            </div>
+                        ) : (
+                            <div className="empty-state-card">
+                                <span className="empty-icon">📭</span>
+                                <h3>No Transactions Yet</h3>
+                                <p>Start adding your scrap collections to see them here.</p>
+                                <button className="btn-primary" onClick={handleAddCollection}>
+                                    Add Your First Collection
+                                </button>
                             </div>
                         )}
                     </div>
