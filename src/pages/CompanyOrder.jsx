@@ -2,15 +2,21 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import SharedNavbar from "../components/SharedNavbar";
 import Footer from "../components/Footer";
+import { createIndustryOrder, getIndustryProfile, getIndustryOrder } from "../services/enterpriseService";
 import "./CompanyOrder.css";
 
 function CompanyOrder() {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
-    const [orderItems, setOrderItems] = useState([
-        { id: 1, material: '', quantity: '', unit: 'kg', grade: '', preferredPrice: '' }
-    ]);
-    const [deliveryDetails, setDeliveryDetails] = useState({
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [existingOrder, setExistingOrder] = useState(null);
+    const [showForm, setShowForm] = useState(false);
+    const [orderData, setOrderData] = useState({
+        material: '',
+        quantity: '',
+        unit: 'kg',
+        preferredPrice: '',
         address: '',
         city: '',
         pincode: '',
@@ -23,7 +29,9 @@ function CompanyOrder() {
         const sessionUser = sessionStorage.getItem('user');
         if (sessionUser) {
             try {
-                setUser(JSON.parse(sessionUser));
+                const parsedUser = JSON.parse(sessionUser);
+                setUser(parsedUser);
+                checkProfileAndLoadOrder();
             } catch (e) {
                 console.error('Error parsing user from session:', e);
                 navigate('/login');
@@ -31,56 +39,80 @@ function CompanyOrder() {
         } else {
             navigate('/login');
         }
-        
-        // Check if enterprise registration is complete
-        const enterpriseRegistered = sessionStorage.getItem('enterpriseRegistered');
-        if (enterpriseRegistered !== 'true') {
-            alert('Please complete enterprise registration first!');
-            navigate('/enterprise');
-        }
     }, [navigate]);
 
-    const handleAddItem = () => {
-        setOrderItems([
-            ...orderItems,
-            { id: orderItems.length + 1, material: '', quantity: '', unit: 'kg', grade: '', preferredPrice: '' }
-        ]);
-    };
-
-    const handleRemoveItem = (id) => {
-        if (orderItems.length > 1) {
-            setOrderItems(orderItems.filter(item => item.id !== id));
+    const checkProfileAndLoadOrder = async () => {
+        try {
+            const profile = await getIndustryProfile();
+            if (!profile) {
+                alert('Please complete enterprise registration first!');
+                navigate('/enterprise');
+                return;
+            }
+            sessionStorage.setItem('enterpriseRegistered', 'true');
+            
+            // Load existing order (one per industry)
+            const order = await getIndustryOrder();
+            setExistingOrder(order);
+        } catch (err) {
+            console.error('Error checking profile:', err);
         }
     };
 
-    const handleItemChange = (id, field, value) => {
-        setOrderItems(orderItems.map(item =>
-            item.id === id ? { ...item, [field]: value } : item
-        ));
+    const handleOrderChange = (field, value) => {
+        setOrderData(prev => ({ ...prev, [field]: value }));
     };
 
-    const handleDeliveryChange = (e) => {
-        setDeliveryDetails({
-            ...deliveryDetails,
-            [e.target.name]: e.target.value
-        });
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setOrderData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('Order submitted:', { orderItems, deliveryDetails });
-        alert('Your scrap order has been submitted! Dealers will contact you shortly.');
-        
-        // Reset form
-        setOrderItems([{ id: 1, material: '', quantity: '', unit: 'kg', grade: '', preferredPrice: '' }]);
-        setDeliveryDetails({
-            address: '',
-            city: '',
-            pincode: '',
-            preferredDate: '',
-            contactName: '',
-            contactPhone: ''
-        });
+        setLoading(true);
+        setError(null);
+
+        try {
+            // Create order with all fields from schema
+            await createIndustryOrder({
+                materialType: orderData.material,
+                quantity: orderData.quantity,
+                price: orderData.preferredPrice || null,
+                deliveryDetails: orderData.address,
+                city: orderData.city,
+                pincode: orderData.pincode,
+                preferredDate: orderData.preferredDate,
+                personName: orderData.contactName,
+                phoneNo: orderData.contactPhone
+            });
+
+            alert('Your scrap order has been submitted successfully! Dealers will contact you shortly.');
+            
+            // Reset form
+            setOrderData({
+                material: '',
+                quantity: '',
+                unit: 'kg',
+                preferredPrice: '',
+                address: '',
+                city: '',
+                pincode: '',
+                preferredDate: '',
+                contactName: '',
+                contactPhone: ''
+            });
+
+            // Refresh order
+            const updatedOrder = await getIndustryOrder();
+            setExistingOrder(updatedOrder);
+            setShowForm(false);
+        } catch (err) {
+            console.error('Error submitting order:', err);
+            setError(err.message || 'Failed to submit order. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -95,110 +127,151 @@ function CompanyOrder() {
                 </div>
             </div>
 
+            {/* Error Display */}
+            {error && (
+                <div className="error-banner" style={{ background: '#fee2e2', color: '#dc2626', padding: '1rem', margin: '1rem auto', maxWidth: '800px', borderRadius: '8px', textAlign: 'center' }}>
+                    {error}
+                </div>
+            )}
+
+            {/* Order Display Section */}
+            {!showForm && (
+                <div className="company-order-section">
+                    <div className="order-container">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                            <h2>My Order</h2>
+                            <button 
+                                className="add-item-btn"
+                                onClick={() => setShowForm(true)}
+                                disabled={existingOrder}
+                                style={existingOrder ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                            >
+                                {existingOrder ? 'Order Already Placed' : '+ New Order'}
+                            </button>
+                        </div>
+                        
+                        {!existingOrder ? (
+                            <div className="empty-state" style={{ textAlign: 'center', padding: '3rem', color: '#6b7280' }}>
+                                <p>No order yet. Click "New Order" to place your scrap order!</p>
+                            </div>
+                        ) : (
+                            <div className="order-item-card">
+                                <div className="item-header">
+                                    <span className="item-number">Order ID: {existingOrder.order_id?.slice(0, 8)}...</span>
+                                    <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>
+                                        {existingOrder.created_at ? new Date(existingOrder.created_at).toLocaleDateString() : 'Pending'}
+                                    </span>
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginTop: '0.5rem' }}>
+                                    <div>
+                                        <small style={{ color: '#6b7280' }}>Material</small>
+                                        <p style={{ fontWeight: '500' }}>{existingOrder.material_type}</p>
+                                    </div>
+                                    <div>
+                                        <small style={{ color: '#6b7280' }}>Quantity</small>
+                                        <p style={{ fontWeight: '500' }}>{existingOrder.quantity}</p>
+                                    </div>
+                                    <div>
+                                        <small style={{ color: '#6b7280' }}>Price</small>
+                                        <p style={{ fontWeight: '500' }}>₹{existingOrder.price || 'N/A'}</p>
+                                    </div>
+                                </div>
+                                <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #e5e7eb' }}>
+                                    <small style={{ color: '#6b7280' }}>Delivery Details</small>
+                                    <p>{existingOrder.delivery_details}, {existingOrder['City']} - {existingOrder['PIN_code']}</p>
+                                    <p>Contact: {existingOrder['Person_name']} ({existingOrder.phone_no})</p>
+                                    <p>Preferred Date: {existingOrder['Prefered_Delivery_Date']}</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
             {/* Order Form Section */}
+            {showForm && (
             <div className="company-order-section">
                 <div className="order-container">
-                    <h2>Create New Order</h2>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                        <h2>Create New Order</h2>
+                        <button 
+                            type="button"
+                            className="remove-item-btn"
+                            onClick={() => setShowForm(false)}
+                        >
+                            ✕ Cancel
+                        </button>
+                    </div>
                     <p className="order-subtitle">Fill in the details for your scrap material requirements</p>
                     
                     <form onSubmit={handleSubmit}>
-                        {/* Order Items */}
+                        {/* Order Item */}
                         <div className="order-items-section">
-                            <h3>Scrap Materials Required</h3>
+                            <h3>Scrap Material Required</h3>
                             
-                            {orderItems.map((item, index) => (
-                                <div key={item.id} className="order-item-card">
-                                    <div className="item-header">
-                                        <span className="item-number">Item #{index + 1}</span>
-                                        {orderItems.length > 1 && (
-                                            <button 
-                                                type="button" 
-                                                className="remove-item-btn"
-                                                onClick={() => handleRemoveItem(item.id)}
-                                            >
-                                                ✕ Remove
-                                            </button>
-                                        )}
+                            <div className="order-item-card">
+                                <div className="item-row">
+                                    <div className="form-group">
+                                        <label>Material Type*</label>
+                                        <select 
+                                            value={orderData.material} 
+                                            onChange={(e) => handleOrderChange('material', e.target.value)}
+                                            required
+                                        >
+                                            <option value="">Select Material</option>
+                                            <option value="metal-ferrous">Metal - Ferrous (Iron, Steel)</option>
+                                            <option value="metal-nonferrous">Metal - Non-Ferrous (Aluminum, Copper, Brass)</option>
+                                            <option value="plastic">Plastic (All Types)</option>
+                                            <option value="paper">Paper & Cardboard</option>
+                                            <option value="glass">Glass</option>
+                                            <option value="ewaste">E-Waste (Electronics)</option>
+                                            <option value="rubber">Rubber & Tires</option>
+                                            <option value="wood">Wood & Timber</option>
+                                            <option value="textile">Textile & Fabric</option>
+                                            <option value="battery">Batteries</option>
+                                            <option value="cable">Cables & Wires</option>
+                                            <option value="mixed">Mixed Scrap</option>
+                                        </select>
                                     </div>
                                     
-                                    <div className="item-row">
-                                        <div className="form-group">
-                                            <label>Material Type*</label>
-                                            <select 
-                                                value={item.material} 
-                                                onChange={(e) => handleItemChange(item.id, 'material', e.target.value)}
-                                                required
-                                            >
-                                                <option value="">Select Material</option>
-                                                <option value="metal-ferrous">Metal - Ferrous (Iron, Steel)</option>
-                                                <option value="metal-nonferrous">Metal - Non-Ferrous (Aluminum, Copper, Brass)</option>
-                                                <option value="plastic">Plastic (All Types)</option>
-                                                <option value="paper">Paper & Cardboard</option>
-                                                <option value="glass">Glass</option>
-                                                <option value="ewaste">E-Waste (Electronics)</option>
-                                                <option value="rubber">Rubber & Tires</option>
-                                                <option value="wood">Wood & Timber</option>
-                                                <option value="textile">Textile & Fabric</option>
-                                                <option value="battery">Batteries</option>
-                                                <option value="cable">Cables & Wires</option>
-                                                <option value="mixed">Mixed Scrap</option>
-                                            </select>
-                                        </div>
-                                        
-                                        <div className="form-group quantity-group">
-                                            <label>Quantity*</label>
-                                            <div className="quantity-input">
-                                                <input
-                                                    type="number"
-                                                    value={item.quantity}
-                                                    onChange={(e) => handleItemChange(item.id, 'quantity', e.target.value)}
-                                                    placeholder="Amount"
-                                                    required
-                                                />
-                                                <select 
-                                                    value={item.unit}
-                                                    onChange={(e) => handleItemChange(item.id, 'unit', e.target.value)}
-                                                >
-                                                    <option value="kg">kg</option>
-                                                    <option value="tons">tons</option>
-                                                    <option value="pieces">pieces</option>
-                                                    <option value="bales">bales</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="item-row">
-                                        <div className="form-group">
-                                            <label>Quality Grade</label>
-                                            <select 
-                                                value={item.grade} 
-                                                onChange={(e) => handleItemChange(item.id, 'grade', e.target.value)}
-                                            >
-                                                <option value="">Select Grade (Optional)</option>
-                                                <option value="premium">Premium Grade</option>
-                                                <option value="standard">Standard Grade</option>
-                                                <option value="mixed">Mixed Grade</option>
-                                                <option value="any">Any Grade Acceptable</option>
-                                            </select>
-                                        </div>
-                                        
-                                        <div className="form-group">
-                                            <label>Preferred Price (₹/{item.unit})</label>
+                                    <div className="form-group quantity-group">
+                                        <label>Quantity*</label>
+                                        <div className="quantity-input">
                                             <input
                                                 type="number"
-                                                value={item.preferredPrice}
-                                                onChange={(e) => handleItemChange(item.id, 'preferredPrice', e.target.value)}
-                                                placeholder="Enter price per unit"
+                                                name="quantity"
+                                                value={orderData.quantity}
+                                                onChange={handleInputChange}
+                                                placeholder="Amount"
+                                                required
                                             />
+                                            <select 
+                                                name="unit"
+                                                value={orderData.unit}
+                                                onChange={handleInputChange}
+                                            >
+                                                <option value="kg">kg</option>
+                                                <option value="tons">tons</option>
+                                                <option value="pieces">pieces</option>
+                                                <option value="bales">bales</option>
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
-                            ))}
-                            
-                            <button type="button" className="add-item-btn" onClick={handleAddItem}>
-                                + Add Another Item
-                            </button>
+                                
+                                <div className="item-row">
+                                    <div className="form-group">
+                                        <label>Preferred Price (₹/{orderData.unit})</label>
+                                        <input
+                                            type="number"
+                                            name="preferredPrice"
+                                            value={orderData.preferredPrice}
+                                            onChange={handleInputChange}
+                                            placeholder="Enter price per unit"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         {/* Delivery Details */}
@@ -210,8 +283,8 @@ function CompanyOrder() {
                                     <label>Delivery Address*</label>
                                     <textarea
                                         name="address"
-                                        value={deliveryDetails.address}
-                                        onChange={handleDeliveryChange}
+                                        value={orderData.address}
+                                        onChange={handleInputChange}
                                         placeholder="Enter full delivery address"
                                         required
                                     ></textarea>
@@ -224,8 +297,8 @@ function CompanyOrder() {
                                     <input
                                         type="text"
                                         name="city"
-                                        value={deliveryDetails.city}
-                                        onChange={handleDeliveryChange}
+                                        value={orderData.city}
+                                        onChange={handleInputChange}
                                         required
                                     />
                                 </div>
@@ -234,8 +307,8 @@ function CompanyOrder() {
                                     <input
                                         type="text"
                                         name="pincode"
-                                        value={deliveryDetails.pincode}
-                                        onChange={handleDeliveryChange}
+                                        value={orderData.pincode}
+                                        onChange={handleInputChange}
                                         required
                                     />
                                 </div>
@@ -247,8 +320,8 @@ function CompanyOrder() {
                                     <input
                                         type="date"
                                         name="preferredDate"
-                                        value={deliveryDetails.preferredDate}
-                                        onChange={handleDeliveryChange}
+                                        value={orderData.preferredDate}
+                                        onChange={handleInputChange}
                                         required
                                     />
                                 </div>
@@ -257,8 +330,8 @@ function CompanyOrder() {
                                     <input
                                         type="text"
                                         name="contactName"
-                                        value={deliveryDetails.contactName}
-                                        onChange={handleDeliveryChange}
+                                        value={orderData.contactName}
+                                        onChange={handleInputChange}
                                         required
                                     />
                                 </div>
@@ -270,8 +343,8 @@ function CompanyOrder() {
                                     <input
                                         type="tel"
                                         name="contactPhone"
-                                        value={deliveryDetails.contactPhone}
-                                        onChange={handleDeliveryChange}
+                                        value={orderData.contactPhone}
+                                        onChange={handleInputChange}
                                         required
                                     />
                                 </div>
@@ -283,8 +356,12 @@ function CompanyOrder() {
 
                         {/* Submit Button */}
                         <div className="order-submit-section">
-                            <button type="submit" className="submit-order-btn">
-                                Submit Order Request
+                            <button 
+                                type="submit" 
+                                className="submit-order-btn"
+                                disabled={loading}
+                            >
+                                {loading ? 'Submitting...' : 'Submit Order Request'}
                             </button>
                             <p className="submit-note">
                                 By submitting, you agree to our terms. Verified dealers will contact you with quotes.
@@ -293,6 +370,7 @@ function CompanyOrder() {
                     </form>
                 </div>
             </div>
+            )}
 
             {/* Quick Info Section */}
             <div className="quick-info-section">
