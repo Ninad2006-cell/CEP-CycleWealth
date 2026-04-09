@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SharedNavbar from "../components/SharedNavbar";
 import supabaseClient from "../supabase-config";
+import Enterprise from "./Enterprise";
 
 function Login() {
     const navigate = useNavigate();
@@ -69,7 +70,10 @@ function Login() {
                 navigate("/scrapdealer");
             } else if (userRole === "Artisan") {
                 navigate("/artisan");
-            } else {
+            } else if(userRole === "industries") {
+                navigate("/Enterprise");
+            }
+            else{
                 navigate("/consumer");
             } 
         } catch (error) {

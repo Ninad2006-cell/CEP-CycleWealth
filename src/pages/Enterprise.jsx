@@ -2,12 +2,17 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import SharedNavbar from "../components/SharedNavbar";
 import Footer from "../components/Footer";
+import { createOrGetIndustryProfile, getIndustryProfile, updateIndustryProfile } from "../services/enterpriseService";
 import "./Enterprise.css";
 
 function Enterprise() {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [isRegistered, setIsRegistered] = useState(false);
+    const [editMode, setEditMode] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [profile, setProfile] = useState(null);
     const [formData, setFormData] = useState({
         companyName: '',
         contactPerson: '',
@@ -22,22 +27,60 @@ function Enterprise() {
         const sessionUser = sessionStorage.getItem('user');
         if (sessionUser) {
             try {
-                setUser(JSON.parse(sessionUser));
+                const parsedUser = JSON.parse(sessionUser);
+                setUser(parsedUser);
+                checkExistingRegistration();
             } catch (e) {
                 console.error('Error parsing user from session:', e);
                 navigate('/login');
             }
         } else {
-            // Redirect to login if not authenticated
             navigate('/login');
         }
-        
-        // Check if user has already registered as enterprise
-        const enterpriseRegistered = sessionStorage.getItem('enterpriseRegistered');
-        if (enterpriseRegistered === 'true') {
-            setIsRegistered(true);
-        }
     }, [navigate]);
+
+    const checkExistingRegistration = async () => {
+        try {
+            const profileData = await getIndustryProfile();
+            if (profileData) {
+                setIsRegistered(true);
+                setProfile(profileData);
+                sessionStorage.setItem('enterpriseRegistered', 'true');
+                
+                // Pre-fill form data for editing (using DB field names)
+                setFormData({
+                    companyName: profileData.company_name || '',
+                    contactPerson: profileData['Contact_person'] || '',
+                    email: profileData.email_address || '',
+                    phone: profileData.phone_no || '',
+                    companySize: profileData.company_size || '',
+                    industryType: profileData.industry_type || '',
+                    budgetRange: profileData['Budget'] || ''
+                });
+            }
+        } catch (err) {
+            console.error('Error checking registration:', err);
+        }
+    };
+
+    const handleUpdate = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+
+        try {
+            await updateIndustryProfile(formData);
+            const updatedProfile = await getIndustryProfile();
+            setProfile(updatedProfile);
+            setEditMode(false);
+            alert('Profile updated successfully!');
+        } catch (err) {
+            console.error('Error updating profile:', err);
+            setError(err.message || 'Update failed. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleInputChange = (e) => {
         setFormData({
@@ -46,24 +89,33 @@ function Enterprise() {
         });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('Enterprise form submitted:', formData);
-        
-        // Set registration flag
-        sessionStorage.setItem('enterpriseRegistered', 'true');
-        setIsRegistered(true);
-        
-        alert('Registration successful! You can now place scrap orders.');
-        setFormData({
-            companyName: '',
-            contactPerson: '',
-            email: '',
-            phone: '',
-            companySize: '',
-            industryType: '',
-            budgetRange: ''
-        });
+        setLoading(true);
+        setError(null);
+
+        try {
+            await createOrGetIndustryProfile(formData);
+            
+            sessionStorage.setItem('enterpriseRegistered', 'true');
+            setIsRegistered(true);
+            
+            alert('Registration successful! You can now place scrap orders.');
+            setFormData({
+                companyName: '',
+                contactPerson: '',
+                email: '',
+                phone: '',
+                companySize: '',
+                industryType: '',
+                budgetRange: ''
+            });
+        } catch (err) {
+            console.error('Error registering enterprise:', err);
+            setError(err.message || 'Registration failed. Please try again.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -171,6 +223,12 @@ function Enterprise() {
                         <h2>Start Your Sustainable Journey</h2>
                         <p>Fill in your details and our enterprise team will reach out within 24 hours</p>
                         
+                        {error && (
+                            <div className="error-banner" style={{ background: '#fee2e2', color: '#dc2626', padding: '1rem', marginBottom: '1rem', borderRadius: '8px', textAlign: 'center' }}>
+                                {error}
+                            </div>
+                        )}
+                        
                         <form className="enterprise-form" onSubmit={handleSubmit}>
                             <div className="form-row">
                                 <div className="form-group">
@@ -262,17 +320,143 @@ function Enterprise() {
                                 </div>
                             </div>
                             
-                            <button type="submit" className="submit-btn">Submit Request</button>
+                            <button type="submit" className="submit-btn" disabled={loading}>
+                                {loading ? 'Submitting...' : 'Submit Request'}
+                            </button>
+                        </form>
+                    </>
+                ) : editMode ? (
+                    <>
+                        <h2>Edit Your Profile</h2>
+                        <p>Update your enterprise details</p>
+                        
+                        {error && (
+                            <div className="error-banner" style={{ background: '#fee2e2', color: '#dc2626', padding: '1rem', marginBottom: '1rem', borderRadius: '8px', textAlign: 'center' }}>
+                                {error}
+                            </div>
+                        )}
+                        
+                        <form className="enterprise-form" onSubmit={handleUpdate}>
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>Company Name*</label>
+                                    <input
+                                        type="text"
+                                        name="companyName"
+                                        value={formData.companyName}
+                                        onChange={handleInputChange}
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Contact Person*</label>
+                                    <input
+                                        type="text"
+                                        name="contactPerson"
+                                        value={formData.contactPerson}
+                                        onChange={handleInputChange}
+                                        required
+                                    />
+                                </div>
+                            </div>
+                            
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>Email Address*</label>
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        value={formData.email}
+                                        onChange={handleInputChange}
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Phone Number*</label>
+                                    <input
+                                        type="tel"
+                                        name="phone"
+                                        value={formData.phone}
+                                        onChange={handleInputChange}
+                                        required
+                                    />
+                                </div>
+                            </div>
+                            
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>Company Size*</label>
+                                    <select name="companySize" value={formData.companySize} onChange={handleInputChange} required>
+                                        <option value="">Select Size</option>
+                                        <option value="startup">Startup (1-50 employees)</option>
+                                        <option value="small">Small (51-200 employees)</option>
+                                        <option value="medium">Medium (201-1000 employees)</option>
+                                        <option value="large">Large (1000+ employees)</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label>Industry Type*</label>
+                                    <select name="industryType" value={formData.industryType} onChange={handleInputChange} required>
+                                        <option value="">Select Industry</option>
+                                        <option value="manufacturing">Manufacturing</option>
+                                        <option value="construction">Construction</option>
+                                        <option value="automotive">Automotive</option>
+                                        <option value="electronics">Electronics</option>
+                                        <option value="textile">Textile</option>
+                                        <option value="packaging">Packaging</option>
+                                        <option value="renewable-energy">Renewable Energy</option>
+                                        <option value="waste-management">Waste Management</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>Budget Range (Monthly)*</label>
+                                    <select name="budgetRange" value={formData.budgetRange} onChange={handleInputChange} required>
+                                        <option value="">Select Budget</option>
+                                        <option value="50k-1lakh">₹50,000 - ₹1,00,000</option>
+                                        <option value="1lakh-5lakh">₹1,00,000 - ₹5,00,000</option>
+                                        <option value="5lakh-10lakh">₹5,00,000 - ₹10,00,000</option>
+                                        <option value="10lakh+">₹10,00,000+</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    {/* Empty placeholder for alignment */}
+                                </div>
+                            </div>
+                            
+                            <div style={{ display: 'flex', gap: '1rem' }}>
+                                <button type="button" className="submit-btn" style={{ background: '#6b7280' }} onClick={() => setEditMode(false)}>
+                                    Cancel
+                                </button>
+                                <button type="submit" className="submit-btn" disabled={loading}>
+                                    {loading ? 'Saving...' : 'Save Changes'}
+                                </button>
+                            </div>
                         </form>
                     </>
                 ) : (
                     <div className="registration-success">
                         <div className="success-icon">✓</div>
-                        <h2>Registration Complete!</h2>
-                        <p>You are now a registered enterprise partner. Start ordering scrap materials from verified dealers.</p>
-                        <button className="go-to-order-btn" onClick={() => navigate('/companyorder')}>
-                            Place Your First Order
-                        </button>
+                        <h2>Welcome, {profile?.company_name}!</h2>
+                        <div style={{ textAlign: 'left', maxWidth: '500px', margin: '2rem auto', background: '#f3f4f6', padding: '1.5rem', borderRadius: '8px' }}>
+                            <p><strong>Contact:</strong> {profile?.['Contact_person']}</p>
+                            <p><strong>Email:</strong> {profile?.email_address}</p>
+                            <p><strong>Phone:</strong> {profile?.phone_no}</p>
+                            <p><strong>Industry:</strong> {profile?.industry_type}</p>
+                            <p><strong>Company Size:</strong> {profile?.company_size}</p>
+                            <p><strong>Budget:</strong> ₹{profile?.['Budget']}</p>
+                        </div>
+                        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                            <button className="go-to-order-btn" onClick={() => setEditMode(true)}>
+                                Edit Profile
+                            </button>
+                            <button className="go-to-order-btn" onClick={() => navigate('/companyorder')}>
+                                Place Order
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>
