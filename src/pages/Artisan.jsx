@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Artisan.css';
 import supabaseClient from '../supabase-config';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
+
 
 function Artisan() {
     const navigate = useNavigate();
@@ -400,6 +403,7 @@ function Artisan() {
                     </div>
                 </div>
             )}
+           
         </div>
     );
 }

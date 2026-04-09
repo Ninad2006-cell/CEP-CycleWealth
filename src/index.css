@@ -38,48 +38,6 @@
   border: none;
 }
 
-.hero {
-  height: 90vh;
-  text-align: center;
-  padding-top: 100px;
-  background: linear-gradient(to right, #c8f7dc, #9be7c4);
-}
-
-.hero h1 {
-  font-size: 48px;
-}
-
-.hero p {
-  margin: 20px;
-  font-size: 18px;
-}
-
-.hero-buttons button {
-  margin: 10px;
-  padding: 12px 20px;
-  border-radius: 10px;
-
-}
-
-.primary {
-  background: green;
-  color: white;
-  border: none;
-}
-
-.secondary {
-  background: rgb(249, 247, 247);
-  border: 1px solid green;
-}
-
-.stats {
-  margin-top: 50px;
-  display: flex;
-  justify-content: center;
-  gap: 60px;
-}
-
-
 /* ------------------ Sign Up and Login Page ------------------*/
 
 .auth-container {
