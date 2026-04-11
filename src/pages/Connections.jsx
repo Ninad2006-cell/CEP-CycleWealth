@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import supabaseClient from '../supabase-config';
 import SharedNavbar from '../components/SharedNavbar';
 import './Connections.css';
+import Navbar2 from '../components/Navbar2';
 
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
     if (!lat1 || !lon1 || !lat2 || !lon2) return Infinity;
@@ -292,7 +293,7 @@ function Connections() {
         <div className="connections-page">
 
             {/* ── Shared Navbar ── */}
-            <SharedNavbar activeLink="connections" badgeCount={receivedRequests.length} user={currentUser} />
+            <Navbar2 activeLink="connections" badgeCount={receivedRequests.length} user={currentUser} />
 
             {/* ── Main layout ── */}
             <div className="conn-layout">

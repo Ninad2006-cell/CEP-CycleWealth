@@ -1,8 +1,8 @@
 .footer {
     background: #f1f5f4;
     padding: 40px 20px 1px;
-   
-    
+
+
 }
 
 .footer-container {
@@ -34,8 +34,18 @@
     color: #333;
 }
 
-.footer-section ul li:hover {
+.footer-section ul li a {
+    color: #333;
+    text-decoration: none;
+}
+
+.footer-section ul li:hover,
+.footer-section ul li:hover a {
     color: #198754;
+}
+
+.footer-section a {
+    text-decoration: none;
 }
 
 .footer-btn {
@@ -57,11 +67,139 @@
 }
 
 .footer-bottom {
-    width: 100%;             
+    width: 100%;
     margin-top: 30px;
     padding: 15px 0;
     text-align: center;
     background: #1f1f1f;
     color: white;
     font-size: 14px;
+}
+
+/* Modal Styles */
+.footer-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.footer-modal {
+    background: white;
+    border-radius: 16px;
+    padding: 2.5rem;
+    max-width: 500px;
+    width: 100%;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #666;
+    padding: 0.5rem;
+    line-height: 1;
+}
+
+.modal-close:hover {
+    color: #333;
+}
+
+.footer-modal h2 {
+    color: #0f5132;
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+    padding-right: 2rem;
+}
+
+.modal-content {
+    margin-bottom: 2rem;
+}
+
+.modal-content .step {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+    padding: 0.8rem;
+    background: #f8faf8;
+    border-radius: 8px;
+}
+
+.modal-content .step-num {
+    background: #198754;
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.modal-content .step p {
+    margin: 0;
+    color: #555;
+    line-height: 1.5;
+}
+
+.modal-content .step strong {
+    color: #0f5132;
+}
+
+.modal-btn {
+    display: block;
+    width: 100%;
+    background: #198754;
+    color: white;
+    text-align: center;
+    padding: 1rem;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: background 0.3s ease;
+}
+
+.modal-btn:hover {
+    background: #0f5132;
+}
+
+@media (max-width: 768px) {
+    .footer-modal {
+        padding: 1.5rem;
+        margin: 10px;
+    }
+
+    .footer-modal h2 {
+        font-size: 1.2rem;
+    }
 }

@@ -39,8 +39,9 @@ function HomeNavbar({ user: propUser }) {
             <div className="nav-links">
                 <a href="/">Home</a>
                 <a href="/about">About Us</a>
+                <a href="/scrap-prices">Scrap Prices</a>
+                <a href="/segregation-guide">Segregation Guide</a>
                 <a href="/contact">Contact</a>
-                <a href="/goals">Our Goals</a>
             </div>
 
             <div className="auth-buttons">

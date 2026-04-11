@@ -129,20 +129,75 @@
     border-left: 4px solid #3498db;
 }
 
+.goals-section {
+    background: linear-gradient(135deg, #9b59b620, #bb8fce20);
+    padding: 30px;
+    border-radius: 12px;
+    border-left: 4px solid #9b59b6;
+}
+
+.goals-intro {
+    font-size: 16px;
+    line-height: 1.8;
+    color: #555;
+    margin-bottom: 30px;
+}
+
+.goals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.goal-card {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.goal-card:hover {
+    transform: translateY(-5px);
+}
+
+.goal-icon {
+    font-size: 40px;
+    margin-bottom: 15px;
+}
+
+.goal-card h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a1f2e;
+    margin-bottom: 10px;
+}
+
+.goal-card p {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.5;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .about-hero h1 {
         font-size: 32px;
     }
-    
+
     .about-content {
         padding: 30px 20px;
     }
-    
+
     .stats-grid {
         grid-template-columns: 1fr;
     }
-    
+
+    .goals-grid {
+        grid-template-columns: 1fr;
+    }
+
     .about-section h2 {
         font-size: 24px;
     }

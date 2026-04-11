@@ -1,0 +1,196 @@
+.scrap-prices-page {
+    min-height: 100vh;
+    background-color: #f8faf8;
+}
+
+.scrap-prices-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.scrap-prices-hero {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: linear-gradient(135deg, #2d6a4f 0%, #40916c 100%);
+    color: white;
+    border-radius: 16px;
+    margin-bottom: 3rem;
+}
+
+.scrap-prices-hero h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+.scrap-prices-tagline {
+    font-size: 1.3rem;
+    opacity: 0.95;
+}
+
+.prices-info {
+    background: #fff3cd;
+    border-left: 4px solid #ffc107;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 3rem;
+}
+
+.prices-note {
+    color: #856404;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.prices-updated {
+    color: #856404;
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+.prices-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    margin-bottom: 4rem;
+}
+
+.price-category-card {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.price-category-card:hover {
+    transform: translateY(-5px);
+}
+
+.price-category-card h2 {
+    color: #2d6a4f;
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e8f5e9;
+}
+
+.price-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.price-table th {
+    text-align: left;
+    padding: 0.75rem;
+    background: #f1f8f4;
+    color: #2d6a4f;
+    font-weight: 600;
+}
+
+.price-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #e8f5e9;
+}
+
+.price-value {
+    color: #2d6a4f;
+    font-weight: 600;
+}
+
+.prices-tips {
+    margin-bottom: 4rem;
+}
+
+.prices-tips h2 {
+    text-align: center;
+    color: #1b4332;
+    font-size: 2rem;
+    margin-bottom: 2rem;
+}
+
+.tips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+}
+
+.tip-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.tip-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.tip-card h3 {
+    color: #2d6a4f;
+    margin-bottom: 0.75rem;
+    font-size: 1.2rem;
+}
+
+.tip-card p {
+    color: #666;
+    line-height: 1.6;
+}
+
+.prices-cta {
+    text-align: center;
+    background: linear-gradient(135deg, #40916c 0%, #74c69d 100%);
+    padding: 4rem 2rem;
+    border-radius: 16px;
+    color: white;
+}
+
+.prices-cta h2 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.prices-cta p {
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+    opacity: 0.95;
+}
+
+.cta-button {
+    display: inline-block;
+    background: white;
+    color: #2d6a4f;
+    padding: 1rem 2.5rem;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.cta-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 768px) {
+    .scrap-prices-hero h1 {
+        font-size: 2rem;
+    }
+
+    .scrap-prices-tagline {
+        font-size: 1rem;
+    }
+
+    .prices-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .price-table {
+        font-size: 0.9rem;
+    }
+}

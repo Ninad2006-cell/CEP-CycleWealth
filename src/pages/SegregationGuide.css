@@ -1,0 +1,328 @@
+.segregation-guide-page {
+    min-height: 100vh;
+    background-color: #f8faf8;
+}
+
+.segregation-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.segregation-hero {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%);
+    color: white;
+    border-radius: 16px;
+    margin-bottom: 3rem;
+}
+
+.segregation-hero h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+.segregation-tagline {
+    font-size: 1.3rem;
+    opacity: 0.95;
+}
+
+.segregation-intro {
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto 4rem;
+    font-size: 1.1rem;
+    color: #555;
+    line-height: 1.8;
+}
+
+.steps-section {
+    margin-bottom: 4rem;
+}
+
+.steps-section h2 {
+    text-align: center;
+    color: #1b4332;
+    font-size: 2rem;
+    margin-bottom: 3rem;
+}
+
+.steps-timeline {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.step-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: relative;
+    transition: transform 0.3s ease;
+}
+
+.step-card:hover {
+    transform: translateY(-5px);
+}
+
+.step-number {
+    position: absolute;
+    top: -15px;
+    left: 2rem;
+    background: #2d6a4f;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.step-icon {
+    font-size: 3rem;
+    margin: 1rem 0;
+    display: block;
+}
+
+.step-card h3 {
+    color: #2d6a4f;
+    font-size: 1.3rem;
+    margin-bottom: 0.75rem;
+}
+
+.step-card p {
+    color: #666;
+    line-height: 1.6;
+}
+
+.materials-section {
+    margin-bottom: 4rem;
+}
+
+.materials-section h2 {
+    text-align: center;
+    color: #1b4332;
+    font-size: 2rem;
+    margin-bottom: 3rem;
+}
+
+.materials-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.material-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-top: 4px solid;
+}
+
+.material-card h3 {
+    font-size: 1.4rem;
+    margin-bottom: 1.5rem;
+}
+
+.guidelines-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.guidelines-list li {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e8f5e9;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.guidelines-list li:last-child {
+    border-bottom: none;
+}
+
+.guidelines-list strong {
+    color: #2d6a4f;
+    font-size: 1rem;
+}
+
+.guidelines-list span {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.mistakes-section {
+    margin-bottom: 4rem;
+}
+
+.mistakes-section h2 {
+    text-align: center;
+    color: #1b4332;
+    font-size: 2rem;
+    margin-bottom: 3rem;
+}
+
+.mistakes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+}
+
+.mistake-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.mistake-header {
+    background: #fee2e2;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.mistake-icon {
+    font-size: 1.5rem;
+}
+
+.mistake-header h3 {
+    color: #dc2626;
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.solution {
+    background: #d1fae5;
+    padding: 1.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.solution-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.solution p {
+    color: #059669;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.benefits-section {
+    margin-bottom: 4rem;
+}
+
+.benefits-section h2 {
+    text-align: center;
+    color: #1b4332;
+    font-size: 2rem;
+    margin-bottom: 3rem;
+}
+
+.benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+}
+
+.benefit-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.benefit-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.benefit-card h3 {
+    color: #2d6a4f;
+    margin-bottom: 0.75rem;
+    font-size: 1.2rem;
+}
+
+.benefit-card p {
+    color: #666;
+    line-height: 1.6;
+}
+
+.segregation-cta {
+    text-align: center;
+    background: linear-gradient(135deg, #2d6a4f 0%, #40916c 100%);
+    padding: 4rem 2rem;
+    border-radius: 16px;
+    color: white;
+}
+
+.segregation-cta h2 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.segregation-cta p {
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+    opacity: 0.95;
+}
+
+.cta-button {
+    display: inline-block;
+    background: white;
+    color: #2d6a4f;
+    padding: 1rem 2.5rem;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    margin: 0 0.5rem;
+}
+
+.cta-button.secondary {
+    background: transparent;
+    color: white;
+    border: 2px solid white;
+}
+
+.cta-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 768px) {
+    .segregation-hero h1 {
+        font-size: 2rem;
+    }
+
+    .segregation-tagline {
+        font-size: 1rem;
+    }
+
+    .steps-timeline,
+    .materials-grid,
+    .mistakes-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cta-button {
+        display: block;
+        margin: 0.5rem auto;
+        max-width: 250px;
+    }
+}

@@ -4,10 +4,53 @@ import Footer from '../components/Footer';
 import './About.css';
 
 function About() {
+    const goals = [
+        {
+            icon: '♻️',
+            title: 'Reduce Waste to Landfill',
+            description: 'Divert 1 million tonnes of recyclable waste from landfills by 2030 through efficient collection and processing networks.'
+        },
+        {
+            icon: '🌍',
+            title: 'Promote Circular Economy',
+            description: 'Create a closed-loop system where materials are continuously reused, recycled, and upcycled, eliminating the concept of waste.'
+        },
+        {
+            icon: '💚',
+            title: 'Environmental Sustainability',
+            description: 'Reduce carbon emissions by 500,000 tonnes annually by promoting local recycling and reducing transportation footprint.'
+        },
+        {
+            icon: '💼',
+            title: 'Economic Empowerment',
+            description: 'Provide dignified livelihoods to 100,000+ waste workers, artisans, and small-scale recyclers through fair wages and market access.'
+        },
+        {
+            icon: '🏘️',
+            title: 'Community Engagement',
+            description: 'Educate and engage 10 million households in responsible waste segregation and sustainable consumption practices.'
+        },
+        {
+            icon: '🤝',
+            title: 'Stakeholder Integration',
+            description: 'Unite households, dealers, artisans, and startups on one platform to eliminate inefficiencies and maximize value creation.'
+        },
+        {
+            icon: '📱',
+            title: 'Technology-Driven Transparency',
+            description: 'Leverage digital tools to ensure fair pricing, track material flows, and provide real-time insights to all stakeholders.'
+        },
+        {
+            icon: '🎨',
+            title: 'Celebrate Upcycling',
+            description: 'Transform public perception of waste by showcasing beautiful, functional products created from discarded materials.'
+        }
+    ];
+
     return (
         <div className="about-page">
             <HomeNavbar />
-            
+
             <div className="about-container">
                 <div className="about-hero">
                     <h1>About CycleWealth</h1>
@@ -18,9 +61,9 @@ function About() {
                     <section className="about-section">
                         <h2>What is CycleWealth?</h2>
                         <p>
-                            CycleWealth is India's first integrated circular economy platform that connects 
-                            households, scrap dealers, artisans, and recycling startups. We transform the 
-                            way waste is managed by creating a seamless ecosystem where waste becomes a 
+                            CycleWealth is India's first integrated circular economy platform that connects
+                            households, scrap dealers, artisans, and recycling startups. We transform the
+                            way waste is managed by creating a seamless ecosystem where waste becomes a
                             valuable resource, benefiting both people and the planet.
                         </p>
                     </section>
@@ -28,10 +71,10 @@ function About() {
                     <section className="about-section problem-section">
                         <h2>The Problem We Address</h2>
                         <p>
-                            India generates over 62 million tonnes of waste annually, with less than 20% 
-                            being properly recycled. Waste management remains fragmented, inefficient, and 
-                            environmentally harmful. Households struggle to find reliable scrap dealers, 
-                            artisans lack access to quality recycled materials, and the informal recycling 
+                            India generates over 62 million tonnes of waste annually, with less than 20%
+                            being properly recycled. Waste management remains fragmented, inefficient, and
+                            environmentally harmful. Households struggle to find reliable scrap dealers,
+                            artisans lack access to quality recycled materials, and the informal recycling
                             sector operates without transparency or fair pricing.
                         </p>
                         <div className="stats-grid">
@@ -67,11 +110,29 @@ function About() {
                     <section className="about-section impact-section">
                         <h2>Our Impact</h2>
                         <p>
-                            By digitizing the circular economy, CycleWealth creates environmental, social, 
-                            and economic value. Every kilogram of scrap recycled through our platform reduces 
-                            landfill burden, creates livelihood opportunities, and moves India closer to a 
+                            By digitizing the circular economy, CycleWealth creates environmental, social,
+                            and economic value. Every kilogram of scrap recycled through our platform reduces
+                            landfill burden, creates livelihood opportunities, and moves India closer to a
                             sustainable future.
                         </p>
+                    </section>
+
+                    <section className="about-section goals-section">
+                        <h2>Our Goals</h2>
+                        <p className="goals-intro">
+                            At CycleWealth, every goal is a commitment to our planet and people.
+                            We measure success not just in profits, but in the positive impact
+                            we create for communities and the environment.
+                        </p>
+                        <div className="goals-grid">
+                            {goals.map((goal, index) => (
+                                <div key={index} className="goal-card">
+                                    <div className="goal-icon">{goal.icon}</div>
+                                    <h3>{goal.title}</h3>
+                                    <p>{goal.description}</p>
+                                </div>
+                            ))}
+                        </div>
                     </section>
                 </div>
             </div>
