@@ -799,48 +799,6 @@ function ScrapDealer() {
                         </div>
                     </div>
 
-                    {/* Payment Methods */}
-                    <div className="profile-section">
-                        <h2 className="section-title">Accepted Payment Methods</h2>
-                        <div className="payment-grid">
-                            {paymentMethodsOptions.map(method => (
-                                <div key={method} className="payment-item">
-                                    <label className="checkbox-label">
-                                        <input
-                                            type="checkbox"
-                                            checked={profile.paymentMethods?.includes(method) || false}
-                                            onChange={() => handlePaymentMethodToggle(method)}
-                                            disabled={!isEditing}
-                                        />
-                                        <span className="checkmark"></span>
-                                        {method}
-                                    </label>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Certifications */}
-                    <div className="profile-section">
-                        <h2 className="section-title">Certifications & Licenses</h2>
-                        <div className="certifications-grid">
-                            {certificationOptions.map(certification => (
-                                <div key={certification} className="certification-item">
-                                    <label className="checkbox-label">
-                                        <input
-                                            type="checkbox"
-                                            checked={profile.certifications?.includes(certification) || false}
-                                            onChange={() => handleCertificationToggle(certification)}
-                                            disabled={!isEditing}
-                                        />
-                                        <span className="checkmark"></span>
-                                        {certification}
-                                    </label>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
                     {/* Social Media */}
                     <div className="profile-section">
                         <h2 className="section-title">Social Media</h2>
@@ -888,21 +846,6 @@ function ScrapDealer() {
                                     />
                                 ) : (
                                     <p>{profile.socialMedia?.twitter ? <a href={profile.socialMedia.twitter} target="_blank" rel="noopener noreferrer">View Profile</a> : 'Not provided'}</p>
-                                )}
-                            </div>
-                            <div className="info-group">
-                                <label>LinkedIn</label>
-                                {isEditing ? (
-                                    <input
-                                        type="url"
-                                        name="socialMedia.linkedin"
-                                        value={profile.socialMedia?.linkedin || ''}
-                                        onChange={handleInputChange}
-                                        className="form-input"
-                                        placeholder="https://linkedin.com/in/yourprofile"
-                                    />
-                                ) : (
-                                    <p>{profile.socialMedia?.linkedin ? <a href={profile.socialMedia.linkedin} target="_blank" rel="noopener noreferrer">View Profile</a> : 'Not provided'}</p>
                                 )}
                             </div>
                         </div>

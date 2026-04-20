@@ -1,21 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Bell } from 'lucide-react';
+import supabaseClient from '../supabase-config';
 import './SharedNavbar.css';
 
 function SharedNavbar({ activeLink = null, badgeCount = 0, user = null }) {
     const navigate = useNavigate();
     const [isEnterpriseRegistered, setIsEnterpriseRegistered] = useState(false);
     const [currentUser, setCurrentUser] = useState(null);
+    const [notificationCount, setNotificationCount] = useState(0);
 
     useEffect(() => {
         const enterpriseRegistered = sessionStorage.getItem('enterpriseRegistered');
         setIsEnterpriseRegistered(enterpriseRegistered === 'true');
-        
+
         const sessionUser = sessionStorage.getItem('user');
         if (sessionUser) {
-            setCurrentUser(JSON.parse(sessionUser));
+            const parsedUser = JSON.parse(sessionUser);
+            setCurrentUser(parsedUser);
+            fetchNotificationCount(parsedUser.user_id);
         }
     }, []);
+
+    const fetchNotificationCount = async (userId) => {
+        try {
+            const { count, error } = await supabaseClient
+                .from('connections')
+                .select('*', { count: 'exact', head: true })
+                .eq('receiver_id', userId)
+                .eq('status', 'pending');
+
+            if (error) throw error;
+            setNotificationCount(count || 0);
+        } catch (error) {
+            console.error('Error fetching notifications:', error);
+        }
+    };
 
     const handleLogin = () => {
         navigate('/login');
@@ -58,9 +78,21 @@ function SharedNavbar({ activeLink = null, badgeCount = 0, user = null }) {
             </div>
             <div className="shared-nav__actions">
                 {user ? (
-                    <button className="shared-nav__btn shared-nav__btn--danger" onClick={handleLogout}>
-                        Sign Out
-                    </button>
+                    <>
+                        <button 
+                            className="shared-nav__notification-btn" 
+                            onClick={() => navigate('/connections')}
+                            title="Connection Requests"
+                        >
+                            <Bell size={20} />
+                            {notificationCount > 0 && (
+                                <span className="shared-nav__notification-badge">{notificationCount}</span>
+                            )}
+                        </button>
+                        <button className="shared-nav__btn shared-nav__btn--danger" onClick={handleLogout}>
+                            Sign Out
+                        </button>
+                    </>
                 ) : (
                     <>
                         <button className="shared-nav__btn shared-nav__btn--ghost" onClick={handleLogin}>

@@ -121,6 +121,47 @@
     border-color: #c82333;
 }
 
+/* Notification Button */
+.shared-nav__notification-btn {
+    position: relative;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    transition: all 0.2s ease;
+}
+
+.shared-nav__notification-btn:hover {
+    background: rgba(15, 157, 88, 0.1);
+    color: #0f9d58;
+}
+
+.shared-nav__notification-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: #dc3545;
+    color: white;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 5px;
+    border-radius: 10px;
+    min-width: 16px;
+    text-align: center;
+    line-height: 1;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .shared-nav {

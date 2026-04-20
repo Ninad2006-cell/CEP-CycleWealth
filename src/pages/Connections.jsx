@@ -81,8 +81,7 @@ function Connections() {
                     supabaseClient
                         .from('users')
                         .select('user_id, "First name", Last_Name, role, email_address, latitude, longitude')
-                        .neq('user_id', user.user_id)
-                        .in('role', ['industries', 'artisens']),
+                        .neq('user_id', user.user_id),
                     supabaseClient
                         .from('connections')
                         .select('*')
