@@ -168,19 +168,11 @@
 
 .stat-value {
     color: rgb(236, 233, 233);
-  font-size: 24px;
-    display: flex;
-    justify-content: center;
-    text-align: center;
-}
-.stat-value::after {
-    content: 'KG';
-    color: white;
-    font-size: 12px;
+    font-size: 28px;
     font-weight: bold;
+    text-align: center;
     margin-bottom: 8px;
 }
-
 
 .stat-label {
     color: white;
@@ -829,4 +821,43 @@
     .contact-btn {
         width: 100%;
     }
+}
+
+/* Error Display */
+.artisan-error {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    gap: 20px;
+}
+
+.artisan-error p {
+    color: #f44336;
+    font-size: 16px;
+    margin: 0;
+}
+
+.artisan-error button {
+    padding: 12px 30px;
+    background: linear-gradient(135deg, #0f9d58, #34d399);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.artisan-error button:hover {
+    transform: scale(1.05);
+}
+
+/* Disabled Button State */
+.submit-product-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
 }
