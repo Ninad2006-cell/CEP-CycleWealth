@@ -505,13 +505,6 @@
   gap: 4px;
 }
 
-.stat-value::after {
-  content: 'kg';
-  font-size: 12px;
-  font-weight: 600;
-  color: #0f9d58;
-  text-transform: uppercase;
-}
 
 /* Inventory Footer */
 .inventory-footer {

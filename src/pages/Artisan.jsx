@@ -53,7 +53,8 @@ function Artisan() {
     const [newProduct, setNewProduct] = useState({
         name: '',
         description: '',
-        price: ''
+        price: '',
+        quantity: ''
     });
 
     useEffect(() => {
@@ -106,6 +107,7 @@ function Artisan() {
                     id: p.product_id,
                     name: p.name,
                     price: p.listed_price,
+                    quantity: p.quantity,
                     sold: p.status === 'Sold' ? 1 : 0,
                     listed: 1,
                     status: p.status === 'Available' ? 'active' : p.status === 'Sold' ? 'sold_out' : 'low_stock',
@@ -134,12 +136,26 @@ function Artisan() {
     };
 
     const openSellModal = () => {
-        // Check if profile is complete
-        if (!profile?.laborProfile?.address || !profile?.laborProfile?.city) {
-            openProfileModal();
+        // Check if profile exists and is complete
+        if (!profile) {
+            setError('Please wait while profile loads...');
+            return;
+        }
+        if (!profile.laborProfile?.address || !profile.laborProfile?.city) {
+            setProfileForm({
+                firstName: profile.laborProfile?.first_name || profile.firstName || '',
+                lastName: profile.laborProfile?.last_name || profile.lastName || '',
+                address: profile.laborProfile?.address || '',
+                city: profile.laborProfile?.city || '',
+                state: profile.laborProfile?.state || '',
+                pinCode: profile.laborProfile?.pin_code || '',
+                skills: profile.laborProfile?.skills || ''
+            });
+            setShowProfileModal(true);
             setError('Please complete your profile before adding products.');
             return;
         }
+        setNewProduct({ name: '', description: '', price: '', quantity: '' });
         setShowSellModal(true);
         setError(null);
     };
@@ -207,7 +223,8 @@ function Artisan() {
             const savedProduct = await addArtisanProduct({
                 name: newProduct.name,
                 description: newProduct.description,
-                price: parseFloat(newProduct.price)
+                price: parseFloat(newProduct.price),
+                quantity: newProduct.quantity
             });
 
             // Add to local state
@@ -216,13 +233,14 @@ function Artisan() {
                 name: savedProduct.name,
                 description: savedProduct.description,
                 price: savedProduct.listed_price,
+                quantity: savedProduct.quantity,
                 sold: 0,
                 listed: 1,
                 status: 'active'
             };
 
             setMyProducts([...myProducts, product]);
-            setNewProduct({ name: '', description: '', price: '' });
+            setNewProduct({ name: '', description: '', price: '', quantity: '' });
             closeSellModal();
         } catch (err) {
             console.error('Error adding product:', err);
@@ -231,6 +249,30 @@ function Artisan() {
         } finally {
             setSavingProduct(false);
         }
+    };
+
+    const handleDeleteProduct = async (productId) => {
+        if (!confirm('Are you sure you want to delete this product?')) {
+            return;
+        }
+        try {
+            await deleteArtisanProduct(productId);
+            setMyProducts(myProducts.filter(p => p.id !== productId));
+        } catch (err) {
+            console.error('Error deleting product:', err);
+            alert('Failed to delete product. Please try again.');
+        }
+    };
+
+    const handleEditProduct = (product) => {
+        setNewProduct({
+            name: product.name || '',
+            description: product.description || '',
+            price: product.price || '',
+            quantity: product.quantity || ''
+        });
+        setShowSellModal(true);
+        setError(null);
     };
 
     // Calculate stats
@@ -412,6 +454,7 @@ function Artisan() {
                                     <tr>
                                         <th>Product</th>
                                         <th>Price</th>
+                                        <th>Quantity</th>
                                         <th>Listed</th>
                                         <th>Sold</th>
                                         <th>Status</th>
@@ -425,12 +468,13 @@ function Artisan() {
                                                 {product.name}
                                             </td>
                                             <td>₹{product.price}</td>
+                                            <td>{product.quantity || '-'}</td>
                                             <td>{product.listed}</td>
                                             <td>{product.sold}</td>
                                             <td><span className={`status-tag ${product.status}`}>{product.status}</span></td>
                                             <td>
-                                                <button className="edit-btn">Edit</button>
-                                                <button className="delete-btn">Delete</button>
+                                                <button className="edit-btn" onClick={() => handleEditProduct(product)}>Edit</button>
+                                                <button className="delete-btn" onClick={() => handleDeleteProduct(product.id)}>Delete</button>
                                             </td>
                                         </tr>
                                     ))}
@@ -514,26 +558,24 @@ function Artisan() {
                                     required
                                 />
                             </div>
-                            <div className="form-row">
-                                <div className="form-group">
-                                    <label>Category</label>
-                                    <select
-                                        value={newProduct.category}
-                                        onChange={e => setNewProduct({ ...newProduct, category: e.target.value })}
-                                    >
-                                        {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                                    </select>
-                                </div>
-                                <div className="form-group">
-                                    <label>Price (₹)</label>
-                                    <input
-                                        type="number"
-                                        value={newProduct.price}
-                                        onChange={e => setNewProduct({ ...newProduct, price: e.target.value })}
-                                        placeholder="299"
-                                        required
-                                    />
-                                </div>
+                            <div className="form-group">
+                                <label>Price (₹)</label>
+                                <input
+                                    type="number"
+                                    value={newProduct.price}
+                                    onChange={e => setNewProduct({ ...newProduct, price: e.target.value })}
+                                    placeholder="299"
+                                    required
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Quantity (e.g., 5 items, 2 kg, 3 pieces)</label>
+                                <input
+                                    type="text"
+                                    value={newProduct.quantity}
+                                    onChange={e => setNewProduct({ ...newProduct, quantity: e.target.value })}
+                                    placeholder="e.g., 5 items"
+                                />
                             </div>
                             <button type="submit" className="submit-product-btn" disabled={savingProduct}>
                                 {savingProduct ? 'Saving...' : 'List Product for Sale'}

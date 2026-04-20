@@ -187,7 +187,8 @@ export const addArtisanProduct = async (productData) => {
             name: productData.name,
             description: productData.description || null,
             listed_price: productData.price ? parseFloat(productData.price) : null,
-            status: 'Available'
+            status: 'Available',
+            quantity: productData.quantity ? productData.quantity.toString() : null
         };
 
         console.log('Inserting product data:', insertData);
