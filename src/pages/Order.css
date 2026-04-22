@@ -1,5 +1,108 @@
 /* Order Page Styles */
 
+/* Consumer Navbar Styles */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 40px;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.logo {
+    color: #16a34a;
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 35px;
+}
+
+.nav-links a {
+    color: #333;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 1rem;
+    padding: 8px 0;
+    transition: color 0.3s;
+}
+
+.nav-links a:hover {
+    color: #16a34a;
+}
+
+.auth-buttons {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.user-avatar-circle {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    user-select: none;
+}
+
+.user-avatar-circle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(15, 157, 88, 0.4);
+}
+
+.logout-dropdown {
+    position: absolute;
+    top: 50px;
+    right: 0;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    padding: 8px;
+    z-index: 1000;
+}
+
+.logout-dropdown button {
+    background: none;
+    border: none;
+    color: #dc2626;
+    font-weight: 500;
+    padding: 8px 16px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.logout-dropdown button:hover {
+    background: #fee2e2;
+    border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+    .navbar {
+        padding: 15px 20px;
+    }
+
+    .nav-links {
+        gap: 20px;
+    }
+
+    .nav-links a {
+        font-size: 0.9rem;
+    }
+}
+
 .order-page {
     min-height: 100vh;
     background: #f8f9fa;

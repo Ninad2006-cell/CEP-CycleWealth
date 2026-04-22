@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import SharedNavbar from '../components/SharedNavbar';
+import supabaseClient from '../supabase-config';
 import {
     getAvailableProducts,
     getProductById,
@@ -58,6 +58,7 @@ function Order() {
         landmark: ''
     });
     const [paymentMethod, setPaymentMethod] = useState('COD');
+    const [showLogout, setShowLogout] = useState(false);
 
     useEffect(() => {
         const init = async () => {
@@ -68,6 +69,12 @@ function Order() {
             }
             const user = JSON.parse(sessionUser);
             setCurrentUser(user);
+            
+            // Check if not a consumer, redirect
+            if (user.role && user.role !== 'consumers' && user.role !== 'consumer') {
+                navigate('/' + user.role.toLowerCase());
+                return;
+            }
 
             // Fetch customer profile and pre-fill address
             try {
@@ -272,6 +279,16 @@ function Order() {
         setCurrentStep(currentStep - 1);
     };
 
+    const handleLogout = async () => {
+        await supabaseClient.auth.signOut();
+        sessionStorage.removeItem('user');
+        navigate('/login');
+    };
+
+    const handleBuyProducts = () => {
+        navigate('/ecom');
+    };
+
     const handlePlaceOrder = async () => {
         if (cart.length === 0) {
             setError('Your cart is empty');
@@ -313,7 +330,26 @@ function Order() {
     if (loading) {
         return (
             <div className="order-page">
-                <SharedNavbar activeLink="order" />
+                {/* Consumer Navbar */}
+                <div className="navbar">
+                    <h2 className="logo">♻️ CycleWealth</h2>
+                    <div className="nav-links">
+                        <a href="/">Home</a>
+                        <a href="/consumer">Dashboard</a>
+                        <a href="/consumer" onClick={(e) => { e.preventDefault(); navigate('/consumer', { state: { activeTab: 'dealers' } }); }}>Scrap Dealers</a>
+                        <a href="#" onClick={handleBuyProducts}>Shop</a>
+                    </div>
+                    <div className="auth-buttons">
+                        <div className="user-avatar-circle" onClick={() => setShowLogout(!showLogout)}>
+                            {currentUser?.["First name"]?.charAt(0)?.toUpperCase()}{currentUser?.["Last_Name"]?.charAt(0)?.toUpperCase()}
+                        </div>
+                        {showLogout && (
+                            <div className="logout-dropdown">
+                                <button onClick={handleLogout}>Logout</button>
+                            </div>
+                        )}
+                    </div>
+                </div>
                 <div className="order-loading">
                     <div className="spinner"></div>
                     <p>Loading products...</p>
@@ -324,7 +360,26 @@ function Order() {
 
     return (
         <div className="order-page">
-            <SharedNavbar activeLink="order" />
+            {/* Consumer Navbar */}
+            <div className="navbar">
+                <h2 className="logo">♻️ CycleWealth</h2>
+                <div className="nav-links">
+                    <a href="/">Home</a>
+                    <a href="/consumer">Dashboard</a>
+                    <a href="/consumer" onClick={(e) => { e.preventDefault(); navigate('/consumer', { state: { activeTab: 'dealers' } }); }}>Scrap Dealers</a>
+                    <a href="#" onClick={handleBuyProducts}>Shop</a>
+                </div>
+                <div className="auth-buttons">
+                    <div className="user-avatar-circle" onClick={() => setShowLogout(!showLogout)}>
+                        {currentUser?.["First name"]?.charAt(0)?.toUpperCase()}{currentUser?.["Last_Name"]?.charAt(0)?.toUpperCase()}
+                    </div>
+                    {showLogout && (
+                        <div className="logout-dropdown">
+                            <button onClick={handleLogout}>Logout</button>
+                        </div>
+                    )}
+                </div>
+            </div>
             
             <div className="order-container">
                 <div className="order-header">

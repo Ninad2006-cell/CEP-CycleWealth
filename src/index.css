@@ -14,6 +14,9 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 15px 40px;
+  position: relative;
+  z-index: 100;
+  background: white;
 }
 
 .logo {
@@ -24,12 +27,18 @@ body {
   margin: 0px 15px;
   text-decoration: none;
   color: black;
+  pointer-events: auto;
 }
 
 .auth-buttons {
   display: flex;
   align-items: center;
   gap: 10px;
+  pointer-events: auto;
+}
+
+.auth-buttons a {
+  pointer-events: auto;
 }
 
 .auth-buttons button {
