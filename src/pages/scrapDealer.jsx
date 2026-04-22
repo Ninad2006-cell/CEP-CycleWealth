@@ -138,9 +138,9 @@ function ScrapDealer() {
             try {
                 const { data: pd, error: profileError } = await supabaseClient
                     .from('scrapdealer_profile')
-                    .select('*')
+                .select('*')
                     .eq('dealer_id', userId)
-                    .single();
+                .single();
                 if (!profileError && pd) profileData = pd;
             } catch (e) {
                 // Table doesn't exist, use empty object
@@ -231,30 +231,29 @@ function ScrapDealer() {
             setError('');
             setSuccess('');
 
-            // Try to save to profile table (may not exist)
-            try {
-                const profileData = {
+            // Save to scrapdealer_profile table
+            const profileData = {
                     dealer_id: currentUser.user_id,
-                    business_name: profile.businessName,
+                business_name: profile.businessName,
                     contact_number: profile.contact_number,
                     Area: profile.address,
                     City: profile.city,
                     State: profile.state,
                     pincode: profile.zipCode,
                     business_description: profile.description,
-                    established_year: profile.establishedYear,
+                established_year: profile.establishedYear,
                     working_hours: profile.workingHours,
                     facebook: profile.socialMedia?.facebook,
                     instagram: profile.socialMedia?.instagram,
                     twitter: profile.socialMedia?.twitter,
                     licence: profile.licence
                 };
-
+            try{
                 await supabaseClient
                     .from('scrapdealer_profile')
                     .upsert(profileData, {
-                        onConflict: 'dealer_id'
-                    });
+                    onConflict: 'dealer_id'
+                });
             } catch (e) {
                 console.log('Could not save to profile table:', e.message);
                 setError('Failed to save profile: ' + e.message);
@@ -263,7 +262,7 @@ function ScrapDealer() {
 
             setSuccess('Profile updated successfully!');
             setIsEditing(false);
-        } catch (error) {
+        }catch (error) {
             console.error('Error saving profile:', error);
             setError('Failed to save profile: ' + error.message);
         } finally {
@@ -740,21 +739,21 @@ function ScrapDealer() {
                                     <p>{profile.licence || 'Not provided'}</p>
                                 )}
                             </div>
-                            <div className="info-group full-width">
+                        <div className="info-group full-width">
                                 <label>Business Description</label>
-                                {isEditing ? (
-                                    <textarea
+                            {isEditing ? (
+                                <textarea
                                         name="description"
                                         value={profile.description}
-                                        onChange={handleInputChange}
-                                        className="form-textarea"
+                                    onChange={handleInputChange}
+                                    className="form-textarea"
                                         rows="4"
                                         placeholder="Describe your business, services, and what makes you unique..."
-                                    />
-                                ) : (
+                                />
+                            ) : (
                                     <p>{profile.description || 'No description provided'}</p>
-                                )}
-                            </div>
+                            )}
+                        </div>
                             <div className="info-group">
                                 <label>Established Year</label>
                                 {isEditing ? (

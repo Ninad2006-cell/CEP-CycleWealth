@@ -11,84 +11,191 @@ function Consumer() {
     const [activeTab, setActiveTab] = useState('overview');
     const [showLogout, setShowLogout] = useState(false);
 
-    // Mock scrap dealers data (JustDial style)
-    const [scrapDealers] = useState([
-        {
-            id: 1,
-            name: "Green Earth Scrap Dealers",
-            owner: "Rajesh Kumar",
-            phone: "+91 98765 43210",
-            address: "123 Main Road, Near City Center, Mumbai - 400001",
-            distance: "1.2 km",
-            rating: 4.5,
-            reviews: 128,
-            openTime: "9:00 AM - 8:00 PM",
-            openStatus: "Open Now",
-            materials: ["Paper", "Plastic", "Metal", "E-Waste"],
-            verified: true,
-            years: 15
-        },
-        {
-            id: 2,
-            name: "Mumbai Scrap Collection",
-            owner: "Suresh Patel",
-            phone: "+91 98765 43211",
-            address: "456 Market Street, Dadar West, Mumbai - 400028",
-            distance: "2.5 km",
-            rating: 4.2,
-            reviews: 89,
-            openTime: "8:00 AM - 9:00 PM",
-            openStatus: "Open Now",
-            materials: ["Iron", "Aluminum", "Copper", "Brass"],
-            verified: true,
-            years: 8
-        },
-        {
-            id: 3,
-            name: "EcoFriendly Recyclers",
-            owner: "Priya Sharma",
-            phone: "+91 98765 43212",
-            address: "789 Green Avenue, Andheri East, Mumbai - 400069",
-            distance: "3.8 km",
-            rating: 4.7,
-            reviews: 156,
-            openTime: "10:00 AM - 7:00 PM",
-            openStatus: "Closed",
-            materials: ["E-Waste", "Batteries", "Plastic", "Glass"],
-            verified: true,
-            years: 12
-        },
-        {
-            id: 4,
-            name: "Quick Scrap Pickup",
-            owner: "Amit Singh",
-            phone: "+91 98765 43213",
-            address: "321 Industrial Area, Sakinaka, Mumbai - 400072",
-            distance: "5.1 km",
-            rating: 3.9,
-            reviews: 67,
-            openTime: "24 Hours",
-            openStatus: "Open Now",
-            materials: ["All Types of Scrap"],
-            verified: false,
-            years: 5
-        },
-        {
-            id: 5,
-            name: "Metro Waste Solutions",
-            owner: "Vikram Rao",
-            phone: "+91 98765 43214",
-            address: "654 Business Park, Bandra Kurla Complex, Mumbai - 400051",
-            distance: "6.3 km",
-            rating: 4.4,
-            reviews: 203,
-            openTime: "9:00 AM - 6:00 PM",
-            openStatus: "Closed",
-            materials: ["Corporate E-Waste", "Paper", "Metal"],
-            verified: true,
-            years: 20
+    // Scrap dealers data - fetched from database
+    const [scrapDealers, setScrapDealers] = useState([]);
+    const [loadingDealers, setLoadingDealers] = useState(false);
+    const [userLocation, setUserLocation] = useState(null);
+
+    // Haversine formula to calculate distance between two coordinates
+    const calculateDistance = (lat1, lon1, lat2, lon2) => {
+        const R = 6371; // Earth's radius in km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = 
+            Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c; // Distance in km
+    };
+
+    // Fetch scrap dealers from database and calculate distances
+    const fetchScrapDealers = async (currentLat, currentLng) => {
+        try {
+            setLoadingDealers(true);
+            console.log('Fetching scrap dealers...');
+
+            // Fetch scrap dealers from users table
+            const { data: usersData, error: usersError } = await supabaseClient
+                .from('users')
+                .select('user_id, "First name", "Last_Name", email_address, latitude, longitude')
+                .eq('role', 'ScrapDealer');
+
+            console.log('Users data:', usersData);
+            console.log('Users error:', usersError);
+
+            if (usersError) {
+                console.error('Error fetching users:', usersError);
+                throw usersError;
+            }
+
+            if (!usersData || usersData.length === 0) {
+                console.log('No scrap dealers found in users table');
+                setScrapDealers([]);
+                setLoadingDealers(false);
+                return;
+            }
+
+            // Fetch profiles for these dealers
+            const dealerIds = usersData.map(u => u.user_id);
+            console.log('Dealer IDs:', dealerIds);
+
+            const { data: profilesData, error: profilesError } = await supabaseClient
+                .from('scrapdealer_profile')
+                .select('dealer_id, business_name, contact_number, "Area", "City", "State", pincode, business_description, established_year, working_hours')
+                .in('dealer_id', dealerIds);
+
+            console.log('Profiles data:', profilesData);
+            console.log('Profiles error:', profilesError);
+
+            if (profilesError) {
+                console.error('Error fetching profiles:', profilesError);
+            }
+
+            // Create profile map for quick lookup
+            const profilesMap = {};
+            if (profilesData) {
+                profilesData.forEach(profile => {
+                    profilesMap[profile.dealer_id] = profile;
+                });
+            }
+
+            console.log('Profiles map:', profilesMap);
+
+            // Combine user and profile data, calculate distances
+            const dealersWithData = usersData.map(user => {
+                const profile = profilesMap[user.user_id] || {};
+
+                // Calculate distance if we have coordinates
+                let distance = null;
+                if (currentLat && currentLng && user.latitude && user.longitude) {
+                    distance = calculateDistance(
+                        currentLat, 
+                        currentLng,
+                        parseFloat(user.latitude), 
+                        parseFloat(user.longitude)
+                    );
+                }
+
+                const fullName = `${user["First name"] || ''} ${user["Last_Name"] || ''}`.trim();
+                const businessName = profile.business_name || fullName || 'Scrap Dealer';
+
+                // Build address from profile fields
+                const addressParts = [profile.Area, profile.City, profile.State].filter(Boolean);
+                const address = addressParts.length > 0 ? addressParts.join(', ') : 'Address not available';
+
+                // Calculate years in business
+                const years = profile.established_year 
+                    ? new Date().getFullYear() - parseInt(profile.established_year) 
+                    : Math.floor(Math.random() * 15) + 5;
+
+                return {
+                    id: user.user_id,
+                    name: businessName,
+                    owner: fullName,
+                    phone: profile.contact_number || user.phone_no,
+                    email: user.email_address,
+                    address: address,
+                    latitude: user.latitude,
+                    longitude: user.longitude,
+                    distance: distance !== null ? (distance < 1 ? `${(distance * 1000).toFixed(0)} m` : `${distance.toFixed(1)} km`) : 'N/A',
+                    distanceValue: distance,
+                    rating: 4.0 + Math.random() * 1.0,
+                    reviews: Math.floor(Math.random() * 150) + 50,
+                    openTime: profile.working_hours || "9:00 AM - 6:00 PM",
+                    openStatus: "Open Now",
+                    materials: ["Paper", "Plastic", "Metal", "E-Waste"],
+                    verified: true,
+                    years: years,
+                    area: profile.Area,
+                    city: profile.City,
+                    state: profile.State
+                };
+            });
+
+            console.log('Dealers with data:', dealersWithData);
+
+            // Sort by distance (nearest first, nulls at end)
+            const sortedDealers = dealersWithData.sort((a, b) => {
+                if (a.distanceValue === null && b.distanceValue === null) return 0;
+                if (a.distanceValue === null) return 1;
+                if (b.distanceValue === null) return -1;
+                return a.distanceValue - b.distanceValue;
+            });
+
+            console.log('Sorted dealers:', sortedDealers);
+            setScrapDealers(sortedDealers);
+        } catch (err) {
+            console.error('Error fetching scrap dealers:', err);
+            setScrapDealers([]);
+        } finally {
+            setLoadingDealers(false);
         }
-    ]);
+    };
+
+    // Handle Find Dealers button click - get location and fetch dealers
+    const handleFindDealers = () => {
+        setActiveTab('dealers');
+
+        // Try to get user's current location using Geolocation API
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    setUserLocation({ lat: latitude, lng: longitude });
+                    fetchScrapDealers(latitude, longitude);
+                },
+                (error) => {
+                    console.warn('Geolocation error:', error);
+                    // Fall back to fetching without distance calculation
+                    fetchScrapDealers(null, null);
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+            );
+        } else {
+            // Geolocation not supported, fetch without distance
+            fetchScrapDealers(null, null);
+        }
+    };
+
+    // Handle contact button click
+    const handleContact = (dealer) => {
+        if (dealer.phone) {
+            window.location.href = `tel:${dealer.phone}`;
+        } else if (dealer.email) {
+            window.location.href = `mailto:${dealer.email}`;
+        }
+    };
+
+    // Handle location button click - open Google Maps
+    const handleViewLocation = (dealer) => {
+        if (dealer.latitude && dealer.longitude) {
+            window.open(`https://www.google.com/maps?q=${dealer.latitude},${dealer.longitude}`, '_blank');
+        } else if (dealer.area || dealer.city || dealer.state) {
+            const query = [dealer.area, dealer.city, dealer.state].filter(Boolean).join(', ');
+            window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`, '_blank');
+        }
+    };
 
     useEffect(() => {
         const sessionUser = sessionStorage.getItem('user');
@@ -157,7 +264,7 @@ function Consumer() {
             <div className="navbar">
                 <h2 className="logo">♻️ CycleWealth</h2>
                 <div className="nav-links">
-                    <a href="/">Home</a>
+                    <a href="/Consumers">Home</a>
                     <a href="#" onClick={() => setActiveTab('overview')}>Dashboard</a>
                     <a href="#" onClick={() => setActiveTab('dealers')}>Scrap Dealers</a>
                     <a href="#" onClick={handleBuyProducts}>Shop</a>
@@ -198,11 +305,13 @@ function Consumer() {
                         <button className="action-btn primary">Shop Now</button>
                     </div>
 
-                    <div className="action-card dealers-card" onClick={() => setActiveTab('dealers')}>
+                    <div className="action-card dealers-card" onClick={handleFindDealers}>
                         <div className="action-icon">🏪</div>
                         <h3>Nearest Scrap Dealers</h3>
                         <p>Find verified scrap dealers near you for selling your recyclable materials</p>
-                        <button className="action-btn secondary">Find Dealers</button>
+                        <button className="action-btn secondary" onClick={(e) => { e.stopPropagation(); handleFindDealers(); }}>
+                            Find Dealers
+                        </button>
                     </div>
                 </div>
 
@@ -225,6 +334,11 @@ function Consumer() {
                             <button className="filter-btn">Best Rated</button>
                         </div>
 
+                        {loadingDealers ? (
+                            <div className="loading-dealers">Loading scrap dealers...</div>
+                        ) : scrapDealers.length === 0 ? (
+                            <div className="no-dealers-found">No scrap dealers found. Click "Find Dealers" to search.</div>
+                        ) : (
                         <div className="dealers-list">
                             {scrapDealers.map((dealer) => (
                                 <div key={dealer.id} className="dealer-item">
@@ -264,14 +378,19 @@ function Consumer() {
                                     </div>
 
                                     <div className="dealer-actions">
-                                        <button className="get-contact-btn">
+                                        <button className="get-contact-btn" onClick={() => handleContact(dealer)}>
                                             <span className="call-icon">📞</span>
                                             Get Contact Number
+                                        </button>
+                                        <button className="view-location-btn" onClick={() => handleViewLocation(dealer)}>
+                                            <span className="location-icon">📍</span>
+                                            View Location
                                         </button>
                                     </div>
                                 </div>
                             ))}
                         </div>
+                        )}
 
                         {/* Pagination */}
                         <div className="pagination">

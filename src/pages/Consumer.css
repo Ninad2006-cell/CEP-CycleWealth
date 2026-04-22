@@ -476,6 +476,45 @@
   transform: scale(1.02);
 }
 
+.view-location-btn {
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: #f5f5f5;
+  color: #333;
+  border: 2px solid #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.view-location-btn:hover {
+  background: #e0e0e0;
+  border-color: #999;
+  transform: scale(1.02);
+}
+
+.loading-dealers {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-size: 16px;
+}
+
+.no-dealers-found {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-size: 16px;
+  background: #f9f9f9;
+  border-radius: 8px;
+}
+
 /* Pagination */
 .pagination {
   display: flex;

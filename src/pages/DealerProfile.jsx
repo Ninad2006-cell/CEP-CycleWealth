@@ -5,7 +5,7 @@ import supabaseClient from '../supabase-config';
 import {
     Building2, Phone, MapPin, Home, Map, Hash,
     ArrowLeft, Save, Loader2, CheckCircle, AlertCircle,
-    FileText, Calendar, Clock, Globe, Link2, Share2
+    FileText, Calendar, Clock,
 } from 'lucide-react';
 import './DealerProfile.css';
 
@@ -369,7 +369,7 @@ function DealerProfile() {
                     <div className="form-section">
                         <div className="section-header">
                             <div className="section-icon">
-                                <Share2 size={20} />
+                                <Facebook size={20} />
                             </div>
                             <h2>Social Media</h2>
                         </div>
@@ -377,7 +377,7 @@ function DealerProfile() {
                         <div className="form-grid">
                             <div className="form-field">
                                 <label htmlFor="facebook">
-                                    <Globe size={16} />
+                                    <Facebook size={16} />
                                     Facebook
                                 </label>
                                 <input
@@ -392,7 +392,7 @@ function DealerProfile() {
 
                             <div className="form-field">
                                 <label htmlFor="instagram">
-                                    <Link2 size={16} />
+                                    <Instagram size={16} />
                                     Instagram
                                 </label>
                                 <input
@@ -407,7 +407,7 @@ function DealerProfile() {
 
                             <div className="form-field">
                                 <label htmlFor="twitter">
-                                    <Link2 size={16} />
+                                    <Twitter size={16} />
                                     Twitter
                                 </label>
                                 <input
