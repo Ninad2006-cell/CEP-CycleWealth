@@ -6,70 +6,86 @@ import supabaseClient from '../supabase-config';
  */
 
 /**
- * Update product status to 'incart' when added to cart
+ * Check if product is available for adding to cart
  * @param {string} productId - Product ID
- * @returns {Promise<boolean>} - Success status
+ * @returns {Promise<boolean>} - True if available
  */
 export const addProductToCart = async (productId) => {
     try {
-        const { data, error, count } = await supabaseClient
+        // Check product availability using quantity, sold, and status
+        const { data: product, error } = await supabaseClient
             .from('upcycled_products')
-            .update({ status: 'incart' }, { count: 'exact' })
+            .select('quantity, sold, status')
             .eq('product_id', productId)
-            .eq('status', 'Available')
-            .select();
+            .single();
 
-        if (error) throw error;
-        // Return true only if at least one row was actually updated
-        return data && data.length > 0;
+        if (error) {
+            console.error('Error fetching product:', error.message, error.code, error.details);
+            throw error;
+        }
+
+        console.log('Product data:', product);
+
+        const quantity = parseInt(product?.quantity);
+        const hasValidQty = !isNaN(quantity) && quantity > 0;
+        const availableStock = hasValidQty ? quantity : 0;
+
+        console.log(`Product check: quantity=${product?.quantity}(${quantity}), availableStock=${availableStock}, status=${product?.status}, hasValidQty=${hasValidQty}`);
+
+        // Available if quantity > 0 and status is Available or incart
+        const isAvailable = hasValidQty && (product?.status === 'Available' || product?.status === 'incart');
+        console.log('Is available:', isAvailable);
+
+        // Mark product as incart when added to cart
+        if (isAvailable && product?.status === 'Available') {
+            const { error: updateError } = await supabaseClient
+                .from('upcycled_products')
+                .update({ status: 'incart' })
+                .eq('product_id', productId);
+
+            if (updateError) {
+                console.error('Error updating product status to incart:', updateError);
+            }
+        }
+
+        return isAvailable;
     } catch (error) {
-        console.error('Error adding product to cart:', error);
+        console.error('Error checking product availability:', error.message || error);
         return false;
     }
 };
 
 /**
- * Update product status back to 'Available' when removed from cart
+ * No-op for cart removal - cart is tracked in frontend only
  * @param {string} productId - Product ID
- * @returns {Promise<boolean>} - Success status
+ * @returns {Promise<boolean>} - Always returns true
  */
 export const removeProductFromCart = async (productId) => {
     try {
-        const { data, error } = await supabaseClient
+        // Restore product status to Available when removed from cart
+        const { error } = await supabaseClient
             .from('upcycled_products')
             .update({ status: 'Available' })
             .eq('product_id', productId)
-            .eq('status', 'incart')
-            .select();
+            .eq('status', 'incart');
 
-        if (error) throw error;
-        // Return true only if at least one row was actually updated
-        return data && data.length > 0;
+        if (error) {
+            console.error('Error restoring product status:', error);
+        }
+        return true;
     } catch (error) {
-        console.error('Error removing product from cart:', error);
-        return false;
+        console.error('Error in removeProductFromCart:', error);
+        return true;
     }
 };
 
 /**
- * Restore all abandoned cart products (incart status) back to Available
- * Use this on page load to recover from crashed/closed sessions
- * @returns {Promise<number>} - Number of products restored
+ * No-op for cart restoration - cart is tracked in frontend only
+ * @returns {Promise<number>} - Always returns 0
  */
 export const restoreAbandonedCartItems = async () => {
-    try {
-        const { data, error } = await supabaseClient
-            .from('upcycled_products')
-            .update({ status: 'Available' })
-            .eq('status', 'incart')
-            .select();
-
-        if (error) throw error;
-        return data ? data.length : 0;
-    } catch (error) {
-        console.error('Error restoring abandoned cart items:', error);
-        return 0;
-    }
+    // Cart is tracked in sessionStorage only, no DB restoration needed
+    return 0;
 };
 
 /**
@@ -79,18 +95,18 @@ export const restoreAbandonedCartItems = async () => {
  */
 export const getProductById = async (productId) => {
     try {
-        // First try without join to avoid relation issues
         const { data, error } = await supabaseClient
             .from('upcycled_products')
             .select('*')
             .eq('product_id', productId)
-            .in('status', ['Available', 'incart'])
             .single();
 
         if (error) {
             console.error('getProductById error:', error);
             throw error;
         }
+        // Return null if product is Sold or in cart
+        if (data?.status === 'Sold' || data?.status === 'incart') return null;
         return data;
     } catch (error) {
         console.error('Error fetching product:', error);
@@ -132,18 +148,32 @@ export const getCartProducts = async () => {
  */
 export const getAvailableProducts = async () => {
     try {
-        // First try simple query without join
+        // Get all products with their quantity and sold
         const { data, error } = await supabaseClient
             .from('upcycled_products')
-            .select('*')
-            .eq('status', 'Available');
+            .select('*');
 
         if (error) {
-            console.error('Supabase query error:', error);
+            console.error('Supabase query error:', error.message, error.code, error.details);
             throw error;
         }
-        console.log('Fetched products:', data);
-        return data || [];
+        
+        console.log('All products from DB:', data);
+        
+        // Filter products that still have stock available
+        const availableProducts = (data || []).filter(product => {
+            const quantity = parseInt(product.quantity) || 0;
+            const status = product.status;
+            // Exclude 'Sold' and 'incart' products only
+            // Treat any other status (Available, null, '', 'active', etc.) as available
+            const isExcludedStatus = status === 'Sold';
+            const hasStock = !isExcludedStatus && quantity > 0;
+            console.log(`Product ${product.name}: qty=${quantity}, status=${status}, hasStock=${hasStock}`);
+            return hasStock;
+        });
+        
+        console.log('Filtered available products:', availableProducts);
+        return availableProducts;
     } catch (error) {
         console.error('Error fetching available products:', error);
         return [];
@@ -185,24 +215,47 @@ export const createOrder = async (orderData) => {
         let totalAmount = 0;
         for (const item of orderData.items) {
             console.log('Looking up product:', item.product_id);
-            const product = await getProductById(item.product_id);
-            console.log('Found product:', product);
-            if (!product) {
-                // Try to get product with any status for debugging
-                const { data: debugProduct } = await supabaseClient
-                    .from('upcycled_products')
-                    .select('product_id, status, name')
-                    .eq('product_id', item.product_id)
-                    .single();
-                console.error('Product debug info:', debugProduct);
-                throw new Error(`Product ${item.product_id} not found or no longer available (status: ${debugProduct?.status || 'not found'})`);
+            const { data: product, error: productError } = await supabaseClient
+                .from('upcycled_products')
+                .select('*')
+                .eq('product_id', item.product_id)
+                .single();
+
+            if (productError) {
+                console.error('Product lookup error:', productError);
+                throw new Error(`Product ${item.product_id} not found`);
             }
+
+            // Reject only Sold products; Available and incart are valid for ordering
+            if (product.status === 'Sold') {
+                throw new Error(`Product ${product.name} is sold out`);
+            }
+
+            console.log('Found product:', product.name, 'status:', product.status);
             item.price = product.listed_price;
             item.labor_id = product.labor_id;
             totalAmount += (product.listed_price || 0) * (item.quantity || 1);
         }
 
-        // Create the order (only using columns that exist in schema)
+        // Upsert customer details
+        const { error: customerError } = await supabaseClient
+            .from('customers')
+            .upsert({
+                customer_id: user.user_id,
+                first_name: addr.fullName?.split(' ')[0] || addr.fullName,
+                last_name: addr.fullName?.split(' ').slice(1).join(' ') || '',
+                address: addr.street,
+                city: addr.city,
+                state: addr.state,
+                pincode: addr.pinCode,
+                phone_no: addr.phone
+            }, { onConflict: 'customer_id' });
+
+        if (customerError) {
+            console.error('Error saving customer details:', customerError);
+        }
+
+        // Create the order
         const { data: order, error: orderError } = await supabaseClient
             .from('orders')
             .insert({
@@ -217,14 +270,77 @@ export const createOrder = async (orderData) => {
 
         if (orderError) throw orderError;
 
-        // Update product statuses to 'Sold' when order is placed
+        // Create order items and update product sold counts
         for (const item of orderData.items) {
+            // Insert order item
+            const { error: itemError } = await supabaseClient
+                .from('order_items')
+                .insert({
+                    order_id: orderId,
+                    product_id: item.product_id,
+                    labor_id: item.labor_id,
+                    quantity: item.quantity || 1,
+                    unit_price: item.price,
+                    price_at_purchase: item.price
+                });
+
+            if (itemError) {
+                console.error('Error creating order item:', itemError);
+            }
+
+            // Get current product data
+            const { data: product } = await supabaseClient
+                .from('upcycled_products')
+                .select('quantity, sold, name')
+                .eq('product_id', item.product_id)
+                .single();
+
+            if (!product) {
+                console.error(`Product ${item.product_id} not found during order creation`);
+                continue;
+            }
+
+            const quantity = parseInt(product.quantity);
+            const currentSold = parseInt(product?.sold) || 0;
+            const orderedQty = parseInt(item.quantity) || 1;
+            const newSold = currentSold + orderedQty;
+            const newQuantity = Math.max(0, (!isNaN(quantity) ? quantity : 0) - orderedQty);
+
+            console.log(`Updating stock for ${product.name}: oldQty=${quantity}, ordered=${orderedQty}, newQty=${newQuantity}, newSold=${newSold}`);
+
+            // Mark as Sold when quantity reaches 0
+            const newStatus = newQuantity <= 0 ? 'Sold' : 'Available';
+            console.log(`Setting status to: ${newStatus}`);
+
             const { error: updateError } = await supabaseClient
                 .from('upcycled_products')
-                .update({ status: 'Sold', sold_price: item.price })
+                .update({
+                    quantity: newQuantity,
+                    sold: newSold,
+                    status: newStatus,
+                    sold_price: item.price
+                })
                 .eq('product_id', item.product_id);
 
-            if (updateError) console.error('Error updating product status:', updateError);
+            if (updateError) console.error('Error updating product sold count:', updateError);
+
+            // Insert into my_orders table for tracking
+            const { error: myOrderError } = await supabaseClient
+                .from('my_orders')
+                .insert({
+                    order_id: orderId,
+                    product_id: item.product_id,
+                    product_name: product.name || 'Unknown Product',
+                    amount_bought: orderedQty,
+                    customer_details: user.user_id,
+                    currentstatus: 'ordered',
+                    shipping_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+                    payment_status: orderData.paymentMethod === 'COD' ? 'pending' : 'paid'
+                });
+
+            if (myOrderError) {
+                console.error('Error inserting into my_orders:', myOrderError);
+            }
         }
 
         return { order };
@@ -269,10 +385,26 @@ export const getArtisanOrders = async () => {
             throw new Error('User not authenticated');
         }
 
+        // Get order_items for this artisan's products, then fetch related orders
+        const { data: orderItems, error: itemsError } = await supabaseClient
+            .from('order_items')
+            .select('order_id')
+            .eq('labor_id', user.user_id);
+
+        if (itemsError) throw itemsError;
+
+        if (!orderItems || orderItems.length === 0) {
+            return [];
+        }
+
+        // Get unique order IDs
+        const orderIds = [...new Set(orderItems.map(item => item.order_id))];
+
+        // Fetch orders
         const { data, error } = await supabaseClient
             .from('orders')
             .select('*')
-            .eq('buyer_id', user.user_id);
+            .in('order_id', orderIds);
 
         if (error) throw error;
         return data || [];
@@ -294,7 +426,7 @@ export const cancelOrder = async (orderId) => {
             throw new Error('User not authenticated');
         }
 
-        // First check if order belongs to user and is pending
+        // First check if order belongs to user and is processing
         const { data: order, error: fetchError } = await supabaseClient
             .from('orders')
             .select('order_status')
@@ -305,10 +437,10 @@ export const cancelOrder = async (orderId) => {
         if (fetchError) throw fetchError;
         if (!order) throw new Error('Order not found');
         if (order.order_status !== 'processing') {
-            throw new Error('Only pending orders can be cancelled');
+            throw new Error('Only processing orders can be cancelled');
         }
 
-        // Update order status to Cancelled
+        // Update order status to delivered (schema allows processing/shipped/delivered)
         const { data: updatedOrder, error: updateError } = await supabaseClient
             .from('orders')
             .update({ order_status: 'delivered' })
@@ -349,6 +481,106 @@ export const updateOrderStatus = async (orderId, status) => {
         return data;
     } catch (error) {
         console.error('Error updating order status:', error);
+        throw error;
+    }
+};
+
+/**
+ * Get orders for the current customer from my_orders table
+ * @returns {Promise<Array>} - Array of order items
+ */
+export const getMyOrders = async () => {
+    try {
+        const user = JSON.parse(sessionStorage.getItem('user'));
+        console.log('User from sessionStorage:', user);
+
+        if (!user?.user_id) {
+            console.error('No user_id found in session:', user);
+            throw new Error('User not authenticated');
+        }
+
+        console.log('Fetching my_orders for customer_details:', user.user_id);
+
+        const { data, error } = await supabaseClient
+            .from('my_orders')
+            .select('*')
+            .eq('customer_details', user.user_id)
+            .order('shipping_date', { ascending: false });
+
+        if (error) {
+            console.error('Supabase error fetching my_orders:', error);
+            throw error;
+        }
+
+        console.log('my_orders data received:', data);
+        return data || [];
+    } catch (error) {
+        console.error('Error fetching my orders:', error.message, error);
+        return [];
+    }
+};
+
+/**
+ * Get customer profile by customer ID
+ * @param {string} customerId - Customer/user ID
+ * @returns {Promise<Object|null>} - Customer profile data
+ */
+export const getCustomerProfile = async (customerId) => {
+    try {
+        const { data, error } = await supabaseClient
+            .from('customers')
+            .select('*')
+            .eq('customer_id', customerId)
+            .single();
+
+        if (error) {
+            // If no record found, return null
+            if (error.code === 'PGRST116') {
+                return null;
+            }
+            throw error;
+        }
+        return data;
+    } catch (error) {
+        console.error('Error fetching customer profile:', error);
+        return null;
+    }
+};
+
+/**
+ * Save or update customer profile
+ * @param {Object} profile - Customer profile data
+ * @returns {Promise<Object>} - Saved customer data
+ */
+export const saveCustomerProfile = async (profile) => {
+    try {
+        const user = JSON.parse(sessionStorage.getItem('user'));
+        if (!user?.user_id) {
+            throw new Error('User not authenticated');
+        }
+
+        const customerData = {
+            customer_id: user.user_id,
+            first_name: profile.first_name,
+            last_name: profile.last_name,
+            phone_no: profile.phone_no,
+            address: profile.address,
+            city: profile.city,
+            state: profile.state,
+            pincode: profile.pincode,
+            ordered_at: new Date().toISOString()
+        };
+
+        const { data, error } = await supabaseClient
+            .from('customers')
+            .upsert(customerData, { onConflict: 'customer_id' })
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error saving customer profile:', error);
         throw error;
     }
 };

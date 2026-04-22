@@ -104,16 +104,22 @@ function Artisan() {
             const products = await getArtisanProducts();
             if (products && products.length > 0) {
                 // Transform database products to frontend format
-                const formattedProducts = products.map(p => ({
-                    id: p.product_id,
-                    name: p.name,
-                    price: p.listed_price,
-                    quantity: p.quantity,
-                    sold: p.status === 'Sold' ? 1 : 0,
-                    listed: 1,
-                    status: p.status === 'Available' ? 'active' : p.status === 'Sold' ? 'sold_out' : 'low_stock',
-                    description: p.description
-                }));
+                const formattedProducts = products.map(p => {
+                    const dbSold = parseInt(p.sold) || 0;
+                    const dbQuantity = parseInt(p.quantity) || 0;
+                    // quantity now tracks remaining stock in DB, decreases on each sale
+                    const isSoldOut = dbQuantity <= 0 || p.status === 'Sold';
+                    return {
+                        id: p.product_id,
+                        name: p.name,
+                        price: p.listed_price,
+                        quantity: dbQuantity,
+                        sold: dbSold,
+                        listed: dbQuantity,
+                        status: isSoldOut ? 'sold_out' : 'active',
+                        description: p.description
+                    };
+                });
                 setMyProducts(formattedProducts);
             }
 
@@ -229,14 +235,15 @@ function Artisan() {
             });
 
             // Add to local state
+            const dbQuantity = parseInt(savedProduct.quantity) || 0;
             const product = {
                 id: savedProduct.product_id,
                 name: savedProduct.name,
                 description: savedProduct.description,
                 price: savedProduct.listed_price,
-                quantity: savedProduct.quantity,
+                quantity: dbQuantity,
                 sold: 0,
-                listed: 1,
+                listed: dbQuantity,
                 status: 'active'
             };
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Consumer.css';
 import supabaseClient from '../supabase-config';
+import { getMyOrders } from '../services/orderService';
 
 function Consumer() {
     const navigate = useNavigate();
@@ -10,6 +11,7 @@ function Consumer() {
     const [error, setError] = useState("");
     const [activeTab, setActiveTab] = useState('overview');
     const [showLogout, setShowLogout] = useState(false);
+    const [stats, setStats] = useState({ productsPurchased: 0, activeOrders: 0 });
 
     // Scrap dealers data - fetched from database
     const [scrapDealers, setScrapDealers] = useState([]);
@@ -198,27 +200,44 @@ function Consumer() {
     };
 
     useEffect(() => {
-        const sessionUser = sessionStorage.getItem('user');
-        if (!sessionUser) {
-            navigate('/login');
-            return;
-        }
+        const init = async () => {
+            const sessionUser = sessionStorage.getItem('user');
+            if (!sessionUser) {
+                navigate('/login');
+                return;
+            }
 
-        const user = JSON.parse(sessionUser);
+            const user = JSON.parse(sessionUser);
 
-        if (user.role === 'ScrapDealer') {
-            navigate('/scrapdealer');
-            return;
-        }
+            if (user.role === 'ScrapDealer') {
+                navigate('/scrapdealer');
+                return;
+            }
 
-        setProfile({
-            firstName: user["First name"] || 'Consumer',
-            lastName: user["Last_Name"] || '',
-            email: user.email_address,
-            role: user.role || 'consumer',
-            joinedDate: new Date().toLocaleDateString()
-        });
-        setLoading(false);
+            setProfile({
+                firstName: user["First name"] || 'Consumer',
+                lastName: user["Last_Name"] || '',
+                email: user.email_address,
+                role: user.role || 'consumer',
+                joinedDate: new Date().toLocaleDateString()
+            });
+
+            // Fetch stats from my_orders
+            try {
+                const orders = await getMyOrders();
+                const productsPurchased = orders.reduce((sum, order) => sum + (order.amount_bought || 0), 0);
+                const activeOrders = orders.filter(order =>
+                    order.currentstatus && ['ordered', 'packed', 'shipped'].includes(order.currentstatus)
+                ).length;
+                setStats({ productsPurchased, activeOrders });
+            } catch (err) {
+                console.error('Error fetching stats:', err);
+            }
+
+            setLoading(false);
+        };
+
+        init();
     }, [navigate]);
 
     const handleLogout = async () => {
@@ -264,8 +283,10 @@ function Consumer() {
             <div className="navbar">
                 <h2 className="logo">♻️ CycleWealth</h2>
                 <div className="nav-links">
+
                     <a href="/Consumers">Home</a>
                     <a href="#" onClick={() => setActiveTab('overview')}>Dashboard</a>
+
                     <a href="#" onClick={() => setActiveTab('dealers')}>Scrap Dealers</a>
                     <a href="#" onClick={handleBuyProducts}>Shop</a>
                 </div>
@@ -312,6 +333,20 @@ function Consumer() {
                         <button className="action-btn secondary" onClick={(e) => { e.stopPropagation(); handleFindDealers(); }}>
                             Find Dealers
                         </button>
+                    </div>
+
+                    <div className="action-card profile-card" onClick={() => navigate('/profile')}>
+                        <div className="action-icon">👤</div>
+                        <h3>My Profile</h3>
+                        <p>Manage your personal details and delivery address for faster checkout</p>
+                        <button className="action-btn secondary">View Profile</button>
+                    </div>
+
+                    <div className="action-card orders-card" onClick={() => navigate('/my-orders')}>
+                        <div className="action-icon">📦</div>
+                        <h3>My Orders</h3>
+                        <p>Track your orders and view delivery status of your purchased products</p>
+                        <button className="action-btn secondary">View Orders</button>
                     </div>
                 </div>
 
@@ -409,11 +444,11 @@ function Consumer() {
                         <h2>📊 Your Activity</h2>
                         <div className="stats-grid consumer-stats">
                             <div className="stat-card eco">
-                                <div className="stat-value">0</div>
+                                <div className="stat-value">{stats.productsPurchased}</div>
                                 <div className="stat-label">Products Purchased</div>
                             </div>
                             <div className="stat-card orders">
-                                <div className="stat-value">0</div>
+                                <div className="stat-value">{stats.activeOrders}</div>
                                 <div className="stat-label">Active Orders</div>
                             </div>
                         </div>

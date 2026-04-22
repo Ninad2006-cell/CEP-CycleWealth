@@ -32,20 +32,23 @@ function Ecom() {
             }
             
             // Map database products to frontend format
-            const mappedProducts = data.map((product, index) => ({
-                id: product.product_id,
-                name: product.name,
-                description: product.description || 'Upcycled eco-friendly product',
-                price: parseFloat(product.listed_price) || 0,
-                originalPrice: Math.round((parseFloat(product.listed_price) || 0) * 1.3),
-                category: categories[index % categories.length] || 'Home Decor',
-                image: ['📓', '🏺', '🪴', '🛍️', '🎨', '👜', '👕', '🪥', '🌱', '✏️', '🪑', '🥥'][index % 12],
-                rating: 4.0 + Math.random() * 1.0,
-                reviews: Math.floor(Math.random() * 300) + 50,
-                stock: 1,
-                ecoBadge: 'Upcycled Product',
-                seller: 'Eco Artisan'
-            }));
+            const mappedProducts = data.map((product, index) => {
+                const availableQty = parseInt(product.quantity) || 0;
+                return {
+                    id: product.product_id,
+                    name: product.name,
+                    description: product.description || 'Upcycled eco-friendly product',
+                    price: parseFloat(product.listed_price) || 0,
+                    originalPrice: Math.round((parseFloat(product.listed_price) || 0) * 1.3),
+                    category: categories[index % categories.length] || 'Home Decor',
+                    image: ['📓', '🏺', '🪴', '🛍️', '🎨', '👜', '👕', '🪥', '🌱', '✏️', '🪑', '🥥'][index % 12],
+                    rating: 4.0 + Math.random() * 1.0,
+                    reviews: Math.floor(Math.random() * 300) + 50,
+                    stock: availableQty,
+                    ecoBadge: 'Upcycled Product',
+                    seller: 'Eco Artisan'
+                };
+            });
             console.log('Mapped products:', mappedProducts);
             setProducts(mappedProducts);
         } catch (err) {
@@ -107,11 +110,11 @@ function Ecom() {
             if (existing) {
                 return prev.map(item =>
                     item.id === product.id
-                        ? { ...item, quantity: item.quantity + 1 }
+                        ? { ...item, orderQuantity: (item.orderQuantity || 1) + 1 }
                         : item
                 );
             }
-            return [...prev, { ...product, quantity: 1 }];
+            return [...prev, { ...product, quantity: product.stock, orderQuantity: 1 }];
         });
     };
 
@@ -122,32 +125,34 @@ function Ecom() {
         setCart(prev => prev.filter(item => item.id !== productId));
     };
 
-    const updateQuantity = (productId, quantity) => {
-        if (quantity <= 0) {
+    const updateQuantity = (productId, orderQuantity) => {
+        if (orderQuantity <= 0) {
             removeFromCart(productId);
             return;
         }
         setCart(prev =>
             prev.map(item =>
-                item.id === productId ? { ...item, quantity } : item
+                item.id === productId ? { ...item, orderQuantity } : item
             )
         );
     };
 
     const getTotalPrice = () => {
-        return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+        return cart.reduce((total, item) => total + (item.price * (item.orderQuantity || 1)), 0);
     };
 
     const getTotalItems = () => {
-        return cart.reduce((total, item) => total + item.quantity, 0);
+        return cart.reduce((total, item) => total + (item.orderQuantity || 1), 0);
     };
 
     const filteredProducts = products.filter(product => {
         const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             product.description.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
+        console.log(`Filter: ${product.name}, matchesSearch=${matchesSearch}, matchesCategory=${matchesCategory}, category=${product.category}`);
         return matchesSearch && matchesCategory;
     });
+    console.log('Filtered products count:', filteredProducts.length);
 
     const renderStars = (rating) => {
         const stars = [];
@@ -233,9 +238,9 @@ function Ecom() {
                                             <h4>{item.name}</h4>
                                             <p className="cart-item-price">₹{item.price}</p>
                                             <div className="quantity-control">
-                                                <button onClick={() => updateQuantity(item.id, item.quantity - 1)}>-</button>
-                                                <span>{item.quantity}</span>
-                                                <button onClick={() => updateQuantity(item.id, item.quantity + 1)}>+</button>
+                                                <button onClick={() => updateQuantity(item.id, (item.orderQuantity || 1) - 1)}>-</button>
+                                                <span>{item.orderQuantity || 1}</span>
+                                                <button onClick={() => updateQuantity(item.id, (item.orderQuantity || 1) + 1)}>+</button>
                                             </div>
                                         </div>
                                         <button className="remove-item" onClick={() => removeFromCart(item.id)}>🗑️</button>

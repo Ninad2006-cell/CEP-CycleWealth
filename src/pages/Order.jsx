@@ -7,7 +7,8 @@ import {
     createOrder,
     addProductToCart,
     removeProductFromCart,
-    restoreAbandonedCartItems
+    restoreAbandonedCartItems,
+    getCustomerProfile
 } from '../services/orderService';
 import {
     ShoppingCart,
@@ -35,10 +36,10 @@ function Order() {
     const [cart, setCart] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Store cart in sessionStorage for cleanup on page leave
+    // Store cart in sessionStorage (shared with Ecom page)
     useEffect(() => {
         if (cart.length > 0) {
-            sessionStorage.setItem('orderCart', JSON.stringify(cart));
+            sessionStorage.setItem('ecomCart', JSON.stringify(cart));
         }
     }, [cart]);
     const [saving, setSaving] = useState(false);
@@ -68,15 +69,57 @@ function Order() {
             const user = JSON.parse(sessionUser);
             setCurrentUser(user);
 
-            // Pre-fill user info if available
-            setDeliveryAddress(prev => ({
-                ...prev,
-                fullName: user["First name"] + " " + (user["Last_Name"] || ''),
-                phone: user.phone || ''
-            }));
+            // Fetch customer profile and pre-fill address
+            try {
+                const customerProfile = await getCustomerProfile(user.user_id);
+                if (customerProfile) {
+                    setDeliveryAddress({
+                        fullName: `${customerProfile.first_name || ''} ${customerProfile.last_name || ''}`.trim(),
+                        phone: customerProfile.phone_no || '',
+                        street: customerProfile.address || '',
+                        city: customerProfile.city || '',
+                        state: customerProfile.state || '',
+                        pinCode: customerProfile.pincode || '',
+                        landmark: ''
+                    });
+                } else {
+                    // Fallback to session user data
+                    setDeliveryAddress(prev => ({
+                        ...prev,
+                        fullName: user["First name"] + " " + (user["Last_Name"] || ''),
+                        phone: user.phone || ''
+                    }));
+                }
+            } catch (error) {
+                console.error('Error fetching customer profile:', error);
+                // Fallback to session user data
+                setDeliveryAddress(prev => ({
+                    ...prev,
+                    fullName: user["First name"] + " " + (user["Last_Name"] || ''),
+                    phone: user.phone || ''
+                }));
+            }
 
-            // Restore any abandoned cart items from previous sessions
-            await restoreAbandonedCartItems();
+            // Restore cart from Ecom page if it exists
+            const savedCart = sessionStorage.getItem('ecomCart');
+            if (savedCart) {
+                try {
+                    const ecomItems = JSON.parse(savedCart);
+                    // Convert Ecom format (id, orderQuantity) to Order format (product_id, orderQuantity)
+                    const convertedItems = ecomItems.map(item => ({
+                        product_id: item.id,
+                        name: item.name,
+                        description: item.description,
+                        price: item.price,
+                        quantity: item.quantity,
+                        artisan: item.seller,
+                        orderQuantity: item.orderQuantity || 1
+                    }));
+                    setCart(convertedItems);
+                } catch (e) {
+                    console.error('Error parsing saved cart:', e);
+                }
+            }
 
             // Check for product ID in URL query params
             const params = new URLSearchParams(location.search);
@@ -93,11 +136,11 @@ function Order() {
 
         // Cleanup: restore cart items to Available when leaving page without ordering
         return () => {
-            const currentCart = JSON.parse(sessionStorage.getItem('orderCart') || '[]');
+            const currentCart = JSON.parse(sessionStorage.getItem('ecomCart') || '[]');
             currentCart.forEach(item => {
-                removeProductFromCart(item.product_id);
+                removeProductFromCart(item.id || item.product_id);
             });
-            sessionStorage.removeItem('orderCart');
+            sessionStorage.removeItem('ecomCart');
         };
     }, [navigate, location.search]);
 
@@ -253,7 +296,7 @@ function Order() {
             const result = await createOrder(orderData);
             setSuccess('Order placed successfully! Order ID: ' + result.order.order_id);
             setCart([]);
-            sessionStorage.removeItem('orderCart');
+            sessionStorage.removeItem('ecomCart');
             setCurrentStep(1);
             
             // Redirect to order confirmation after 2 seconds
