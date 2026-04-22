@@ -11,6 +11,19 @@ const STATUS_OPTIONS = [
     { value: 'upcycled', label: 'Upcycled', color: '#9C27B0' }
 ];
 
+// Default scrap categories with descriptions
+const DEFAULT_CATEGORIES = [
+    { scrap_type: 'Iron', description: 'Ferrous metal, commonly found in construction materials, old machinery, and vehicles' },
+    { scrap_type: 'Copper', description: 'Non-ferrous metal with high conductivity, found in wires, pipes, and electronics' },
+    { scrap_type: 'Brass', description: 'Alloy of copper and zinc, commonly found in fittings, valves, and decorative items' },
+    { scrap_type: 'Aluminium', description: 'Lightweight non-ferrous metal, found in cans, window frames, and automotive parts' },
+    { scrap_type: 'Steel', description: 'Strong ferrous metal alloy, found in appliances, beams, and industrial equipment' },
+    { scrap_type: 'Plastic', description: 'Various plastic materials including bottles, containers, and packaging waste' },
+    { scrap_type: 'Paper', description: 'Paper products including cardboard, newspapers, and office paper waste' },
+    { scrap_type: 'Electronic Gadgets', description: 'E-waste including phones, computers, tablets, and electronic components' },
+    { scrap_type: 'Others', description: 'Other scrap materials not listed above' }
+];
+
 function AddScrapCollection() {
     const navigate = useNavigate();
     const [currentUser, setCurrentUser] = useState(null);
@@ -22,8 +35,11 @@ function AddScrapCollection() {
     const [formData, setFormData] = useState({
         category_id: '',
         weight: '',
-        status: 'collected'
+        quantity: 1,
+        status: 'collected',
+        custom_description: ''
     });
+    const [isOtherCategory, setIsOtherCategory] = useState(false);
 
     useEffect(() => {
         const sessionUser = sessionStorage.getItem('user');
@@ -49,13 +65,26 @@ function AddScrapCollection() {
             const { data, error } = await supabaseClient
                 .from('scrap_categories')
                 .select('*')
-                .order('category_name', { ascending: true });
+                .order('scrap_type', { ascending: true });
 
             if (error) throw error;
-            setCategories(data || []);
+            
+            // If no categories exist, use default categories
+            if (!data || data.length === 0) {
+                setCategories(DEFAULT_CATEGORIES.map((cat, index) => ({
+                    category_id: `default-${index}`,
+                    ...cat
+                })));
+            } else {
+                setCategories(data);
+            }
         } catch (error) {
             console.error('Error fetching categories:', error);
-            setMessage({ type: 'error', text: 'Failed to load categories. Please try again.' });
+            setMessage({ type: 'error', text: 'Failed to load categories. Using default categories.' });
+            setCategories(DEFAULT_CATEGORIES.map((cat, index) => ({
+                category_id: `default-${index}`,
+                ...cat
+            })));
         } finally {
             setLoading(false);
         }
@@ -67,6 +96,15 @@ function AddScrapCollection() {
             ...prev,
             [name]: value
         }));
+
+        // Check if 'Others' category is selected
+        if (name === 'category_id') {
+            const selectedCategory = categories.find(c => c.category_id === value);
+            setIsOtherCategory(selectedCategory?.scrap_type === 'Others');
+            if (selectedCategory?.scrap_type !== 'Others') {
+                setFormData(prev => ({ ...prev, custom_description: '' }));
+            }
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -82,39 +120,140 @@ function AddScrapCollection() {
             return;
         }
 
+        if (parseInt(formData.quantity) <= 0) {
+            setMessage({ type: 'error', text: 'Quantity must be greater than 0.' });
+            return;
+        }
+
+        // Check if 'Others' is selected and custom description is provided
+        const selectedCategory = categories.find(c => c.category_id === formData.category_id);
+        if (selectedCategory?.scrap_type === 'Others' && !formData.custom_description.trim()) {
+            setMessage({ type: 'error', text: 'Please provide a description for the custom scrap type.' });
+            return;
+        }
+
         try {
             setSubmitting(true);
             setMessage({ type: '', text: '' });
 
-            const { error } = await supabaseClient
+            console.log('Starting submission...', { formData, currentUser });
+
+            const selectedCategory = categories.find(c => c.category_id === formData.category_id);
+            let finalCategoryId = null;
+
+            // STEP 1: Check if category exists in database by scrap_type name
+            console.log('Checking if category exists:', selectedCategory.scrap_type);
+            const { data: existingCategories, error: checkError } = await supabaseClient
+                .from('scrap_categories')
+                .select('category_id, scrap_type, quantity')
+                .eq('scrap_type', selectedCategory.scrap_type);
+
+            if (checkError) {
+                console.error('Error checking existing category:', checkError);
+                throw new Error(`Failed to check category: ${checkError.message}`);
+            }
+
+            const existingCategory = existingCategories && existingCategories.length > 0 ? existingCategories[0] : null;
+
+            if (existingCategory) {
+                // Category exists - use its ID and update quantity
+                console.log('Category exists:', existingCategory);
+                finalCategoryId = existingCategory.category_id;
+                
+                // Update quantity (add new quantity to existing)
+                const newQuantity = (existingCategory.quantity || 0) + parseInt(formData.quantity);
+                console.log('Updating category quantity to:', newQuantity);
+                
+                const { error: updateError } = await supabaseClient
+                    .from('scrap_categories')
+                    .update({ quantity: newQuantity })
+                    .eq('category_id', finalCategoryId);
+                
+                if (updateError) {
+                    console.error('Error updating category quantity:', updateError);
+                    throw new Error(`Failed to update category: ${updateError.message}`);
+                }
+                console.log('Category quantity updated successfully');
+            } else {
+                // STEP 2: Category doesn't exist - create it with generated UUID
+                console.log('Creating new category:', selectedCategory.scrap_type);
+                
+                const categoryDescription = selectedCategory.scrap_type === 'Others' 
+                    ? formData.custom_description 
+                    : selectedCategory.description;
+                
+                // Generate UUID for new category
+                finalCategoryId = crypto.randomUUID();
+                console.log('Generated category_id:', finalCategoryId);
+                
+                const categoryData = {
+                    category_id: finalCategoryId,
+                    scrap_type: selectedCategory.scrap_type,
+                    description: categoryDescription,
+                    quantity: parseInt(formData.quantity)
+                };
+                console.log('Inserting category data:', categoryData);
+                
+                const { error: catError } = await supabaseClient
+                    .from('scrap_categories')
+                    .insert([categoryData]);
+
+                if (catError) {
+                    console.error('Category creation error:', catError);
+                    throw new Error(`Failed to create category: ${catError.message}`);
+                }
+                
+                console.log('Category created successfully with ID:', finalCategoryId);
+            }
+
+            // STEP 3: Insert into scrap_inventory with the category_id
+            if (!finalCategoryId) {
+                throw new Error('Category ID is missing after creation');
+            }
+
+            // Generate UUID for inventory_id
+            const inventoryId = crypto.randomUUID();
+            
+            const inventoryData = {
+                inventory_id: inventoryId,
+                owner_id: currentUser.user_id,
+                category_id: finalCategoryId,
+                weight: parseFloat(formData.weight),
+                status: formData.status
+            };
+            console.log('Inserting into scrap_inventory:', inventoryData);
+
+            const { error: inventoryError } = await supabaseClient
                 .from('scrap_inventory')
-                .insert([
-                    {
-                        owner_id: currentUser.user_id,
-                        category_id: formData.category_id,
-                        weight: parseFloat(formData.weight),
-                        status: formData.status,
-                        last_updated: new Date().toISOString()
-                    }
-                ]);
+                .insert([inventoryData]);
 
-            if (error) throw error;
+            if (inventoryError) {
+                console.error('Inventory insert error:', inventoryError);
+                throw new Error(`Failed to add to inventory: ${inventoryError.message}`);
+            }
 
+            console.log('Inventory inserted successfully with ID:', inventoryId);
             setMessage({ type: 'success', text: 'Scrap collection added successfully!' });
             setFormData({
                 category_id: '',
                 weight: '',
-                status: 'collected'
+                quantity: 1,
+                status: 'collected',
+                custom_description: ''
             });
+            setIsOtherCategory(false);
 
             // Redirect after 2 seconds
             setTimeout(() => {
-                navigate('/scrap-dealer');
+                navigate('/scrapDealer');
             }, 2000);
 
         } catch (error) {
             console.error('Error adding scrap collection:', error);
-            setMessage({ type: 'error', text: 'Failed to add scrap collection. Please try again.' });
+            setMessage({ 
+                type: 'error', 
+                text: `Failed to add scrap collection: ${error.message || 'Please try again.'}` 
+            });
         } finally {
             setSubmitting(false);
         }
@@ -201,16 +340,56 @@ function AddScrapCollection() {
                                             <option value="">Select a category</option>
                                             {categories.map(category => (
                                                 <option key={category.category_id} value={category.category_id}>
-                                                    {category.category_name}
+                                                    {category.scrap_type || category.category_name}
                                                 </option>
                                             ))}
                                         </select>
+
+                                        {/* Custom Description field for 'Others' */}
+                                        {isOtherCategory && (
+                                            <div className="form-group custom-description-group">
+                                                <label htmlFor="custom_description">
+                                                    Custom Description <span className="required">*</span>
+                                                </label>
+                                                <textarea
+                                                    id="custom_description"
+                                                    name="custom_description"
+                                                    value={formData.custom_description}
+                                                    onChange={handleInputChange}
+                                                    placeholder="Describe the scrap material (e.g., Glass, Wood, Mixed metals)"
+                                                    className="form-textarea"
+                                                    rows="3"
+                                                    required
+                                                />
+                                                <p className="help-text">Please describe the type of scrap material</p>
+                                            </div>
+                                        )}
                                         {getSelectedCategory() && (
                                             <p className="help-text">
-                                                Selected: {getSelectedCategory().category_name}
+                                                Selected: {getSelectedCategory().scrap_type || getSelectedCategory().category_name}
                                                 {getSelectedCategory().description && ` - ${getSelectedCategory().description}`}
                                             </p>
                                         )}
+                                    </div>
+
+                                    {/* Quantity Input */}
+                                    <div className="form-group">
+                                        <label htmlFor="quantity">
+                                            Quantity <span className="required">*</span>
+                                        </label>
+                                        <input
+                                            type="number"
+                                            id="quantity"
+                                            name="quantity"
+                                            value={formData.quantity}
+                                            onChange={handleInputChange}
+                                            placeholder="Enter number of items"
+                                            min="1"
+                                            step="1"
+                                            className="form-input"
+                                            required
+                                        />
+                                        <p className="help-text">Enter the number of items/units</p>
                                     </div>
 
                                     {/* Weight Input */}
@@ -233,7 +412,7 @@ function AddScrapCollection() {
                                             />
                                             <span className="unit-label">kg</span>
                                         </div>
-                                        <p className="help-text">Enter the weight in kilograms (e.g., 10.5)</p>
+                                        <p className="help-text">Enter the total weight in kilograms (e.g., 10.5)</p>
                                     </div>
 
                                     {/* Status Selection */}
@@ -308,7 +487,11 @@ function AddScrapCollection() {
                             <div className="preview-details">
                                 <div className="preview-item">
                                     <span className="preview-label">Material:</span>
-                                    <span className="preview-value">{getSelectedCategory()?.category_name}</span>
+                                    <span className="preview-value">{getSelectedCategory()?.scrap_type || getSelectedCategory()?.category_name}</span>
+                                </div>
+                                <div className="preview-item">
+                                    <span className="preview-label">Quantity:</span>
+                                    <span className="preview-value">{formData.quantity} items</span>
                                 </div>
                                 <div className="preview-item">
                                     <span className="preview-label">Weight:</span>
