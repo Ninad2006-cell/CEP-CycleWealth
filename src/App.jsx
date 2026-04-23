@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
@@ -24,6 +25,38 @@ import Contact from "./pages/Contact";
 
 console.log('App.jsx imports loaded')
 
+// Dashboard component that redirects based on user role
+function Dashboard() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const sessionUser = sessionStorage.getItem('user');
+    if (sessionUser) {
+      setUser(JSON.parse(sessionUser));
+    }
+    setLoading(false);
+  }, []);
+
+  if (loading) return <div>Loading...</div>;
+
+  if (!user) return <Navigate to="/login" replace />;
+
+  // Redirect based on role
+  switch (user.role) {
+    case 'ScrapDealer':
+      return <Navigate to="/scrapdealer" replace />;
+    case 'Consumer':
+      return <Navigate to="/consumer" replace />;
+    case 'Artisan':
+      return <Navigate to="/artisan" replace />;
+    case 'Enterprise':
+      return <Navigate to="/enterprise" replace />;
+    default:
+      return <Navigate to="/profile" replace />;
+  }
+}
+
 function App() {
   console.log('App component rendering')
   return (
@@ -32,6 +65,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/scrapdealer" element={<ScrapDealer />} />
         <Route path="/connections" element={<Connections />} />
         <Route path="/add-scrap" element={<AddScrapCollection />} />

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './ViewScrapInventory.css';
-import SharedNavbar from '../components/SharedNavbar';
+import Navbar2 from '../components/Navbar2';
 import supabaseClient from '../supabase-config';
 
 const STATUS_CONFIG = {
@@ -178,7 +178,7 @@ function ViewScrapInventory() {
 
     return (
         <div className="view-inventory-page">
-            <SharedNavbar user={currentUser} />
+            <Navbar2 user={currentUser} />
             <div className="view-inventory-main">
                 <div className="view-inventory-container">
                     {/* Header */}

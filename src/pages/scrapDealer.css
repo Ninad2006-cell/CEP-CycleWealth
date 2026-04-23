@@ -93,7 +93,7 @@
 }
 
 .profile-info-section {
-    padding: 48px 24px 20px;
+    padding: 48px 1.25rem 20px;
 }
 
 .profile-main-info {
@@ -961,7 +961,7 @@
     }
     
     .profile-info-section {
-        padding: 32px 16px 16px;
+        padding: 32px 1rem 16px;
     }
     
     .profile-name {
@@ -1076,6 +1076,274 @@
     }
     
     .empty-subtext {
+        font-size: 13px;
+    }
+}
+
+/* Social Media Icons Styles */
+.social-media-icons {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    padding: 10px 0;
+}
+
+.social-icon-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.social-icon-link:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.social-icon-svg {
+    width: 28px;
+    height: 28px;
+    transition: all 0.3s ease;
+}
+
+/* Facebook */
+.social-icon-link.facebook {
+    background: #1877F2;
+}
+
+.social-icon-link.facebook:hover {
+    background: #166fe5;
+}
+
+.social-icon-link.facebook .social-icon-svg {
+    color: white;
+}
+
+/* Instagram */
+.social-icon-link.instagram {
+    background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+}
+
+.social-icon-link.instagram:hover {
+    background: linear-gradient(45deg, #e0862a 0%, #d85c35 25%, #c8233a 50%, #b91f5a 75%, #a81577 100%);
+}
+
+.social-icon-link.instagram .social-icon-svg {
+    color: white;
+}
+
+/* Twitter/X */
+.social-icon-link.twitter {
+    background: #000000;
+}
+
+.social-icon-link.twitter:hover {
+    background: #1a1a1a;
+}
+
+.social-icon-link.twitter .social-icon-svg {
+    color: white;
+}
+
+.no-social-text {
+    color: #888;
+    font-style: italic;
+    font-size: 14px;
+}
+
+/* ── Consumer-style dealer cards for Connections ── */
+.dealers-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.dealer-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 25px;
+    border: 1px solid #e8e8e8;
+    border-radius: 10px;
+    background: #fafafa;
+    transition: box-shadow 0.3s ease;
+}
+
+.dealer-item:hover {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.dealer-main-info {
+    flex: 1;
+    padding-right: 25px;
+}
+
+.dealer-name-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.dealer-name {
+    margin: 0;
+    color: #333;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.verified-badge {
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.status-badge {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.status-badge.open {
+    color: #0f9d58;
+    background: #e8f5e9;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.dealer-address {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.dealer-address .location-icon {
+    font-size: 16px;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.dealer-address p {
+    margin: 0;
+    color: #555;
+    font-size: 14px;
+    flex: 1;
+    line-height: 1.4;
+}
+
+.dealer-materials {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.material-tag {
+    background: #fff3e0;
+    color: #e65100;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.dealer-actions {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 160px;
+}
+
+.get-contact-btn {
+    padding: 14px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    border: none;
+    background: linear-gradient(135deg, #0f9d58, #34d399);
+    color: white;
+}
+
+.get-contact-btn:hover {
+    background: linear-gradient(135deg, #0d8b4d, #2bc889);
+    transform: scale(1.02);
+}
+
+.view-location-btn {
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #f5f5f5;
+    color: #333;
+    border: 2px solid #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.view-location-btn:hover {
+    background: #e0e0e0;
+    border-color: #999;
+    transform: scale(1.02);
+}
+
+.loading-dealers {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+    font-size: 16px;
+}
+
+.no-dealers-found {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+    font-size: 16px;
+    background: #f9f9f9;
+    border-radius: 8px;
+}
+
+@media (max-width: 600px) {
+    .dealer-item {
+        flex-direction: column;
+        padding: 18px;
+    }
+
+    .dealer-main-info {
+        padding-right: 0;
+        margin-bottom: 16px;
+    }
+
+    .dealer-actions {
+        flex-direction: row;
+        min-width: unset;
+        gap: 10px;
+    }
+
+    .get-contact-btn,
+    .view-location-btn {
+        flex: 1;
+        padding: 10px 14px;
+        margin-top: 0;
         font-size: 13px;
     }
 }

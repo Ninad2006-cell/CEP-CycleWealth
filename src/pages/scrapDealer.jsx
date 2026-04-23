@@ -26,6 +26,7 @@ import {
 import './scrapDealer.css';
 import Navbar2 from '../components/Navbar2';
 import { getPendingEnterpriseOrders, acceptEnterpriseOrder } from '../services/notificationService';
+import Footer from '../components/Footer';
 
 function ScrapDealer() {
     const navigate = useNavigate();
@@ -155,6 +156,42 @@ function ScrapDealer() {
                 console.log('Profile table not found, using user data only');
             }
 
+            // Get actual connections count
+            let connectionsCount = 0;
+            try {
+                const { data: connectionsData, error: connError } = await supabaseClient
+                    .from('connections')
+                    .select('*', { count: 'exact' })
+                    .or(`requester_id.eq.${userId},receiver_id.eq.${userId}`)
+                    .eq('status', 'accepted');
+                if (!connError && connectionsData) {
+                    connectionsCount = connectionsData.length;
+                }
+            } catch (e) {
+                console.log('Could not fetch connections:', e.message);
+            }
+
+            // Get total recycled products from scrap_inventory
+            let totalRecycled = 0;
+            try {
+                const { data: inventoryData, error: invError } = await supabaseClient
+                    .from('scrap_inventory')
+                    .select('weight')
+                    .eq('owner_id', userId)
+                    .eq('status', 'recycled');
+                if (!invError && inventoryData) {
+                    totalRecycled = inventoryData.reduce((sum, item) => sum + (parseFloat(item.weight) || 0), 0);
+                }
+            } catch (e) {
+                console.log('Could not fetch inventory:', e.message);
+            }
+
+            // Calculate experience years from established year
+            const currentYear = new Date().getFullYear();
+            const experienceYears = profileData.established_year 
+                ? currentYear - parseInt(profileData.established_year) 
+                : 0;
+
             const combinedProfile = {
                 firstName: userData["First name"] || '',
                 lastName: userData["Last_Name"] || '',
@@ -175,6 +212,12 @@ function ScrapDealer() {
                     facebook: profileData.facebook || '',
                     instagram: profileData.instagram || '',
                     twitter: profileData.twitter || ''
+                },
+                stats: {
+                    connections: connectionsCount,
+                    experience: experienceYears,
+                    annualVolume: totalRecycled.toFixed(1),
+                    partners: connectionsCount
                 }
             };
 
@@ -340,111 +383,87 @@ function ScrapDealer() {
             <Navbar2 activeLink="profile" user={currentUser}/>
             <div className="profile-container">
                 
-                {/* Profile Header Card */}
-                <div className="profile-header-card">
-                    <div className="profile-cover">
-                        <div className="profile-avatar-large">
-                            {profile.firstName?.charAt(0)}{profile.lastName?.charAt(0)}
-                        </div>
-                    </div>
-                    <div className="profile-info-section">
-                        <div className="profile-main-info">
-                            <div>
-                                <h1 className="profile-name">{profile.firstName} {profile.lastName}</h1>
-                                <p className="profile-title">
-                                    <Briefcase size={14} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
-                                    Founder & Proprietor - {profile.businessName}
-                                </p>
-                                <p className="profile-location">
-                                    <MapPin size={14} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
-                                    {profile.address}, {profile.city}, {profile.state}
-                                </p>
-                                <div className="profile-badges">
-                                    <span className="badge badge-green">
-                                        <Recycle size={12} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
-                                        Metal Recycler
-                                    </span>
-                                    <span className="badge badge-blue">
-                                        <Factory size={12} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
-                                        Industrial Scrap
-                                    </span>
-                                    <span className="badge badge-yellow">
-                                        <BadgeCheck size={12} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
-                                        Verified Dealer
-                                    </span>
-                                </div>
-                            </div>
-                            <div className="profile-actions">
-                                {!isEditing ? (
-                                    <div className="action-buttons">
-                                        <button 
-                                            className="btn btn-primary"
-                                            onClick={() => setIsEditing(true)}
-                                        >
-                                            Edit Profile
-                                        </button>
-                                        <button 
-                                            className="btn btn-secondary"
-                                            onClick={() => navigate('/add-scrap')}
-                                        >
-                                            + Add Collection
-                                        </button>
-                                        <button 
-                                            className="btn btn-secondary"
-                                            onClick={() => navigate('/view-inventory')}
-                                        >
-                                            View Inventory
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <div className="edit-actions">
-                                        <button 
-                                            className="btn btn-success"
-                                            onClick={handleSaveProfile}
-                                            disabled={saving}
-                                        >
-                                            {saving ? 'Saving...' : 'Save'}
-                                        </button>
-                                        <button 
-                                            className="btn btn-secondary"
-                                            onClick={handleCancel}
-                                        >
-                                            Cancel
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                        
-                        {/* Stats */}
-                        <div className="stats-row">
-                            <div className="stat-box">
-                                <div className="stat-num">{profile.stats?.connections || 0}+</div>
-                                <div className="stat-lbl">Connections</div>
-                            </div>
-                            <div className="stat-box">
-                                <div className="stat-num">{profile.stats?.experience || 0} yrs</div>
-                                <div className="stat-lbl">Experience</div>
-                            </div>
-                            <div className="stat-box">
-                                <div className="stat-num" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
-                                    <IndianRupee size={18} />
-                                    {profile.stats?.annualVolume || 0}Cr
-                                </div>
-                                <div className="stat-lbl">Annual Volume</div>
-                            </div>
-                            <div className="stat-box">
-                                <div className="stat-num">{profile.stats?.partners || 0}</div>
-                                <div className="stat-lbl">Partners</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 {error && <div className="alert alert-error">{error}</div>}
                 {success && <div className="alert alert-success">{success}</div>}
 
                 <div className="profile-content">
+                    {/* Profile Header Card */}
+                    <div className="profile-header-card">
+                        <div className="profile-cover">
+                            <div className="profile-avatar-large">
+                                {profile.firstName?.charAt(0)}{profile.lastName?.charAt(0)}
+                            </div>
+                        </div>
+                        <div className="profile-info-section">
+                            <div className="profile-main-info">
+                                <div>
+                                    <h1 className="profile-name">{profile.firstName} {profile.lastName}</h1>
+                                    <p className="profile-title">
+                                        <Briefcase size={14} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
+                                        Founder & Proprietor - {profile.businessName}
+                                    </p>
+                                    <p className="profile-location">
+                                        <MapPin size={14} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
+                                        {profile.address}, {profile.city}, {profile.state}
+                                    </p>
+                                    <div className="profile-badges">
+                                        <span className="badge badge-green">
+                                            <Recycle size={12} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                                            Metal Recycler
+                                        </span>
+                                        <span className="badge badge-blue">
+                                            <Factory size={12} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                                            Industrial Scrap
+                                        </span>
+                                        <span className="badge badge-yellow">
+                                            <BadgeCheck size={12} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                                            Verified Dealer
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="profile-actions">
+                                    {!isEditing ? (
+                                        <div className="action-buttons">
+                                            <button 
+                                                className="btn btn-primary"
+                                                onClick={() => setIsEditing(true)}
+                                            >
+                                                Edit Profile
+                                            </button>
+                                            <button 
+                                                className="btn btn-secondary"
+                                                onClick={() => navigate('/add-scrap')}
+                                            >
+                                                + Add Collection
+                                            </button>
+                                            <button 
+                                                className="btn btn-secondary"
+                                                onClick={() => navigate('/view-inventory')}
+                                            >
+                                                View Inventory
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="edit-actions">
+                                            <button 
+                                                className="btn btn-success"
+                                                onClick={handleSaveProfile}
+                                                disabled={saving}
+                                            >
+                                                {saving ? 'Saving...' : 'Save'}
+                                            </button>
+                                            <button 
+                                                className="btn btn-secondary"
+                                                onClick={handleCancel}
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     {/* About Section */}
                     <div className="card">
                         <p className="section-title">About</p>
@@ -717,7 +736,7 @@ function ScrapDealer() {
                             </div>
                         )}
 
-                        <button className="view-all-btn">
+                        <button className="view-all-btn" onClick={() => navigate('/connections')}>
                             View all connections <ArrowRight size={14} style={{ marginLeft: '4px', verticalAlign: 'middle' }} />
                         </button>
                     </div>
@@ -775,44 +794,6 @@ function ScrapDealer() {
                                 </>
                             )}
                         </div>
-                    </div>
-
-                    {/* Recommendations Section */}
-                    <div className="card">
-                        <p className="section-title">Recommendations</p>
-                        <div className="recommendations-list">
-                            {profile.recommendations?.length > 0 ? (
-                                profile.recommendations.map((rec, index) => (
-                                    <div key={index} className="recommendation">
-                                        <p className="recommendation-text">"{rec.text}"</p>
-                                        <p className="recommendation-author">
-                                            <User size={14} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
-                                            {rec.author}
-                                        </p>
-                                    </div>
-                                ))
-                            ) : (
-                                <>
-                                    <div className="recommendation">
-                                        <p className="recommendation-text">"Fair pricing and reliable service. Always on time with pickups."</p>
-                                        <p className="recommendation-author">
-                                            <User size={14} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
-                                            Happy Customer
-                                        </p>
-                                    </div>
-                                    <div className="recommendation">
-                                        <p className="recommendation-text">"Best source for quality scrap materials in the area."</p>
-                                        <p className="recommendation-author">
-                                            <User size={14} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
-                                            Regular Client
-                                        </p>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                        <button className="view-all-btn">
-                            Write a recommendation <ArrowRight size={14} style={{ marginLeft: '4px', verticalAlign: 'middle' }} />
-                        </button>
                     </div>
 
                     {/* Business Address */}
@@ -939,21 +920,21 @@ function ScrapDealer() {
                                     <p>{profile.licence || 'Not provided'}</p>
                                 )}
                             </div>
-                        <div className="info-group full-width">
+                            <div className="info-group full-width">
                                 <label>Business Description</label>
-                            {isEditing ? (
-                                <textarea
+                                {isEditing ? (
+                                    <textarea
                                         name="description"
                                         value={profile.description}
-                                    onChange={handleInputChange}
-                                    className="form-textarea"
+                                        onChange={handleInputChange}
+                                        className="form-textarea"
                                         rows="4"
                                         placeholder="Describe your business, services, and what makes you unique..."
-                                />
-                            ) : (
+                                    />
+                                ) : (
                                     <p>{profile.description || 'No description provided'}</p>
-                            )}
-                        </div>
+                                )}
+                            </div>
                             <div className="info-group">
                                 <label>Established Year</label>
                                 {isEditing ? (
@@ -991,10 +972,10 @@ function ScrapDealer() {
                     {/* Social Media */}
                     <div className="profile-section">
                         <h2 className="section-title">Social Media</h2>
-                        <div className="info-grid">
-                            <div className="info-group">
-                                <label>Facebook</label>
-                                {isEditing ? (
+                        {isEditing ? (
+                            <div className="info-grid">
+                                <div className="info-group">
+                                    <label>Facebook</label>
                                     <input
                                         type="url"
                                         name="socialMedia.facebook"
@@ -1003,13 +984,9 @@ function ScrapDealer() {
                                         className="form-input"
                                         placeholder="https://facebook.com/yourpage"
                                     />
-                                ) : (
-                                    <p>{profile.socialMedia?.facebook ? <a href={profile.socialMedia.facebook} target="_blank" rel="noopener noreferrer">View Profile</a> : 'Not provided'}</p>
-                                )}
-                            </div>
-                            <div className="info-group">
-                                <label>Instagram</label>
-                                {isEditing ? (
+                                </div>
+                                <div className="info-group">
+                                    <label>Instagram</label>
                                     <input
                                         type="url"
                                         name="socialMedia.instagram"
@@ -1018,13 +995,9 @@ function ScrapDealer() {
                                         className="form-input"
                                         placeholder="https://instagram.com/yourprofile"
                                     />
-                                ) : (
-                                    <p>{profile.socialMedia?.instagram ? <a href={profile.socialMedia.instagram} target="_blank" rel="noopener noreferrer">View Profile</a> : 'Not provided'}</p>
-                                )}
-                            </div>
-                            <div className="info-group">
-                                <label>Twitter</label>
-                                {isEditing ? (
+                                </div>
+                                <div className="info-group">
+                                    <label>Twitter</label>
                                     <input
                                         type="url"
                                         name="socialMedia.twitter"
@@ -1033,14 +1006,40 @@ function ScrapDealer() {
                                         className="form-input"
                                         placeholder="https://twitter.com/yourhandle"
                                     />
-                                ) : (
-                                    <p>{profile.socialMedia?.twitter ? <a href={profile.socialMedia.twitter} target="_blank" rel="noopener noreferrer">View Profile</a> : 'Not provided'}</p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="social-media-icons">
+                                {profile.socialMedia?.facebook && (
+                                    <a href={profile.socialMedia.facebook} target="_blank" rel="noopener noreferrer" className="social-icon-link facebook">
+                                        <svg className="social-icon-svg" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                                        </svg>
+                                    </a>
+                                )}
+                                {profile.socialMedia?.instagram && (
+                                    <a href={profile.socialMedia.instagram} target="_blank" rel="noopener noreferrer" className="social-icon-link instagram">
+                                        <svg className="social-icon-svg" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                                        </svg>
+                                    </a>
+                                )}
+                                {profile.socialMedia?.twitter && (
+                                    <a href={profile.socialMedia.twitter} target="_blank" rel="noopener noreferrer" className="social-icon-link twitter">
+                                        <svg className="social-icon-svg" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 00-2.163-2.723c-.951-.538-2.17-.837-3.471-.837-2.346 0-4.263 1.603-4.42 3.658a10.008 10.008 0 01-2.187-2.44 4.898 4.898 0 00-.685 2.437 5.015 5.015 0 00.849 2.779 4.945 4.945 0 01-2.238-.613v.07a5.014 5.014 0 003.987 4.916c-.587.16-1.2.245-1.833.245-.464 0-.914-.045-1.35-.13a5.021 5.021 0 004.708 3.48 10.035 10.035 0 01-6.198 2.13c-.403 0-.8-.024-1.19-.068a14.18 14.18 0 007.547 2.212c9.056 0 14.01-7.502 14.01-14.01 0-.213-.005-.426-.014-.637a10.03 10.03 0 002.46-2.548l-.047-.02z"/>
+                                        </svg>
+                                    </a>
+                                )}
+                                {!profile.socialMedia?.facebook && !profile.socialMedia?.instagram && !profile.socialMedia?.twitter && (
+                                    <p className="no-social-text">No social media links provided</p>
                                 )}
                             </div>
-                        </div>
+                        )}
                     </div>
                 </div>
             </div>
+            <Footer />
         </div>
     );
 }

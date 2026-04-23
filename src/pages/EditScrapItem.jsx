@@ -52,7 +52,7 @@ function EditScrapItem() {
             const { data, error } = await supabaseClient
                 .from('scrap_categories')
                 .select('*')
-                .order('category_name', { ascending: true });
+                .order('scrap_type', { ascending: true });
 
             if (error) throw error;
             setCategories(data || []);
@@ -72,7 +72,7 @@ function EditScrapItem() {
                     status,
                     last_updated,
                     owner_id,
-                    scrap_categories (category_id, category_name, description)
+                    scrap_categories (category_id, scrap_type, description)
                 `)
                 .eq('inventory_id', itemId)
                 .single();
@@ -244,7 +244,7 @@ function EditScrapItem() {
                                             <option value="">Select a category</option>
                                             {categories.map(category => (
                                                 <option key={category.category_id} value={category.category_id}>
-                                                    {category.category_name}
+                                                    {category.scrap_type}
                                                 </option>
                                             ))}
                                         </select>
@@ -361,9 +361,9 @@ function EditScrapItem() {
                                 {formData.category_id !== (originalData?.scrap_categories?.category_id || '') && (
                                     <div className="change-item">
                                         <span className="change-label">Category:</span>
-                                        <span className="change-old">{originalData?.scrap_categories?.category_name}</span>
+                                        <span className="change-old">{originalData?.scrap_categories?.scrap_type}</span>
                                         <span className="change-arrow">→</span>
-                                        <span className="change-new">{getSelectedCategory()?.category_name}</span>
+                                        <span className="change-new">{getSelectedCategory()?.scrap_type}</span>
                                     </div>
                                 )}
                                 {parseFloat(formData.weight) !== parseFloat(originalData?.weight) && (

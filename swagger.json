@@ -1,0 +1,1302 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "CycleWealth API",
+    "description": "API documentation for CycleWealth - Circular Economy Platform",
+    "version": "1.0.0",
+    "contact": {
+      "name": "CycleWealth Team"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://your-project.supabase.co/rest/v1",
+      "description": "Supabase REST API"
+    }
+  ],
+  "paths": {
+    "/upcycled_products": {
+      "get": {
+        "summary": "Get all upcycled products",
+        "tags": ["Products"],
+        "parameters": [
+          {
+            "name": "labor_id",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Filter by artisan ID"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["Available", "incart", "Sold"] },
+            "description": "Filter by status"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of products",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Product" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create new product",
+        "tags": ["Products"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ProductInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Product created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Product" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/upcycled_products/{productId}": {
+      "get": {
+        "summary": "Get product by ID",
+        "tags": ["Products"],
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product details",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Product" }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update product",
+        "tags": ["Products"],
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ProductInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Product updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Product" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete product",
+        "tags": ["Products"],
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Product deleted" }
+        }
+      }
+    },
+    "/orders": {
+      "get": {
+        "summary": "Get orders",
+        "tags": ["Orders"],
+        "parameters": [
+          {
+            "name": "buyer_id",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Filter by buyer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of orders",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Order" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create order",
+        "tags": ["Orders"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/OrderInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Order created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Order" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/{orderId}": {
+      "patch": {
+        "summary": "Update order status",
+        "tags": ["Orders"],
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "order_status": { "type": "string", "enum": ["processing", "shipped", "delivered"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Order updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Order" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/order_items": {
+      "get": {
+        "summary": "Get order items",
+        "tags": ["Order Items"],
+        "parameters": [
+          {
+            "name": "labor_id",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Filter by artisan"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of order items",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/OrderItem" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create order item",
+        "tags": ["Order Items"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/OrderItemInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Order item created" }
+        }
+      }
+    },
+    "/customers": {
+      "get": {
+        "summary": "Get customer profile",
+        "tags": ["Customers"],
+        "parameters": [
+          {
+            "name": "customer_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer profile",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Customer" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create or update customer (UPSERT)",
+        "tags": ["Customers"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CustomerInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Customer saved",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Customer" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/my_orders": {
+      "get": {
+        "summary": "Get my orders",
+        "tags": ["My Orders"],
+        "parameters": [
+          {
+            "name": "customer_details",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of my orders",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/MyOrder" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create my order entry",
+        "tags": ["My Orders"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/MyOrderInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "My order created" }
+        }
+      }
+    },
+    "/industry_profile": {
+      "get": {
+        "summary": "Get industry profile",
+        "tags": ["Enterprise"],
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Industry profile",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/IndustryProfile" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create industry profile",
+        "tags": ["Enterprise"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/IndustryProfileInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Profile created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/IndustryProfile" }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update industry profile",
+        "tags": ["Enterprise"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/IndustryProfileInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/IndustryProfile" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/industry_order": {
+      "get": {
+        "summary": "Get industry order",
+        "tags": ["Enterprise"],
+        "parameters": [
+          {
+            "name": "industry_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Industry order",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/IndustryOrder" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create industry order",
+        "tags": ["Enterprise"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/IndustryOrderInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Order created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/IndustryOrder" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete industry order",
+        "tags": ["Enterprise"],
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Order deleted" }
+        }
+      }
+    },
+    "/skilledlabor_profile": {
+      "get": {
+        "summary": "Get skilled labor profile",
+        "tags": ["Artisans"],
+        "parameters": [
+          {
+            "name": "labor_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Artisan profile",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SkilledLaborProfile" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create skilled labor profile",
+        "tags": ["Artisans"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SkilledLaborProfileInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Profile created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SkilledLaborProfile" }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update skilled labor profile",
+        "tags": ["Artisans"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SkilledLaborProfileInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SkilledLaborProfile" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notifications": {
+      "get": {
+        "summary": "Get notifications",
+        "tags": ["Notifications"],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["connection", "inventory", "system"] }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "default": 20 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of notifications",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Notification" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create notification(s)",
+        "tags": ["Notifications"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  { "$ref": "#/components/schemas/NotificationInput" },
+                  {
+                    "type": "array",
+                    "items": { "$ref": "#/components/schemas/NotificationInput" }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Notification(s) created" }
+        }
+      },
+      "patch": {
+        "summary": "Mark notifications as read",
+        "tags": ["Notifications"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "is_read": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Notifications updated" }
+        }
+      },
+      "delete": {
+        "summary": "Delete all notifications",
+        "tags": ["Notifications"],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Notifications deleted" }
+        }
+      }
+    },
+    "/notifications/{notificationId}": {
+      "patch": {
+        "summary": "Mark single notification as read",
+        "tags": ["Notifications"],
+        "parameters": [
+          {
+            "name": "notificationId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "is_read": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Notification updated" }
+        }
+      },
+      "delete": {
+        "summary": "Delete single notification",
+        "tags": ["Notifications"],
+        "parameters": [
+          {
+            "name": "notificationId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Notification deleted" }
+        }
+      }
+    },
+    "/connections": {
+      "get": {
+        "summary": "Get connections",
+        "tags": ["Connections"],
+        "parameters": [
+          {
+            "name": "requester_id",
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "receiver_id",
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["pending", "accepted", "rejected"] }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of connections",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Connection" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create connection request",
+        "tags": ["Connections"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ConnectionInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Connection created" }
+        }
+      },
+      "patch": {
+        "summary": "Update connection status",
+        "tags": ["Connections"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": { "type": "string", "enum": ["accepted", "rejected"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Connection updated" }
+        }
+      }
+    },
+    "/scrap_inventory": {
+      "get": {
+        "summary": "Get scrap inventory",
+        "tags": ["Scrap Inventory"],
+        "parameters": [
+          {
+            "name": "owner_id",
+            "in": "query",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["collected", "sorted", "processed", "recycled", "upcycled"] }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of inventory items",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/ScrapInventory" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create inventory item",
+        "tags": ["Scrap Inventory"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ScrapInventoryInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Inventory item created" }
+        }
+      }
+    },
+    "/scrap_inventory/{id}": {
+      "patch": {
+        "summary": "Update inventory item",
+        "tags": ["Scrap Inventory"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ScrapInventoryInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Inventory item updated" }
+        }
+      },
+      "delete": {
+        "summary": "Delete inventory item",
+        "tags": ["Scrap Inventory"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Inventory item deleted" }
+        }
+      }
+    },
+    "/scrapdealer_profile": {
+      "get": {
+        "summary": "Get scrap dealer profile",
+        "tags": ["Scrap Dealer"],
+        "parameters": [
+          {
+            "name": "dealer_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dealer profile",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ScrapDealerProfile" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create scrap dealer profile",
+        "tags": ["Scrap Dealer"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ScrapDealerProfileInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Profile created" }
+        }
+      },
+      "patch": {
+        "summary": "Update scrap dealer profile",
+        "tags": ["Scrap Dealer"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ScrapDealerProfileInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Profile updated" }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "summary": "Get user data",
+        "tags": ["Users"],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User data",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/User" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Product": {
+        "type": "object",
+        "properties": {
+          "product_id": { "type": "string", "format": "uuid" },
+          "labor_id": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "listed_price": { "type": "number" },
+          "sold_price": { "type": "number" },
+          "status": { "type": "string", "enum": ["Available", "incart", "Sold"] },
+          "quantity": { "type": "integer" },
+          "sold": { "type": "integer" }
+        }
+      },
+      "ProductInput": {
+        "type": "object",
+        "required": ["name", "labor_id"],
+        "properties": {
+          "product_id": { "type": "string", "format": "uuid" },
+          "labor_id": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "listed_price": { "type": "number" },
+          "status": { "type": "string", "enum": ["Available", "incart", "Sold"], "default": "Available" },
+          "quantity": { "type": "integer" }
+        }
+      },
+      "Order": {
+        "type": "object",
+        "properties": {
+          "order_id": { "type": "string", "format": "uuid" },
+          "buyer_id": { "type": "string" },
+          "total_amount": { "type": "number" },
+          "order_status": { "type": "string", "enum": ["processing", "shipped", "delivered"] },
+          "order_type": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "OrderInput": {
+        "type": "object",
+        "required": ["buyer_id", "total_amount"],
+        "properties": {
+          "order_id": { "type": "string", "format": "uuid" },
+          "buyer_id": { "type": "string" },
+          "total_amount": { "type": "number" },
+          "order_status": { "type": "string", "default": "processing" },
+          "order_type": { "type": "string", "default": "customers" }
+        }
+      },
+      "OrderItem": {
+        "type": "object",
+        "properties": {
+          "order_item_id": { "type": "string", "format": "uuid" },
+          "order_id": { "type": "string", "format": "uuid" },
+          "product_id": { "type": "string", "format": "uuid" },
+          "labor_id": { "type": "string" },
+          "quantity": { "type": "integer" },
+          "unit_price": { "type": "number" },
+          "price_at_purchase": { "type": "number" }
+        }
+      },
+      "OrderItemInput": {
+        "type": "object",
+        "required": ["order_id", "product_id", "labor_id"],
+        "properties": {
+          "order_id": { "type": "string", "format": "uuid" },
+          "product_id": { "type": "string", "format": "uuid" },
+          "labor_id": { "type": "string" },
+          "quantity": { "type": "integer", "default": 1 },
+          "unit_price": { "type": "number" },
+          "price_at_purchase": { "type": "number" }
+        }
+      },
+      "Customer": {
+        "type": "object",
+        "properties": {
+          "customer_id": { "type": "string" },
+          "first_name": { "type": "string" },
+          "last_name": { "type": "string" },
+          "phone_no": { "type": "string" },
+          "address": { "type": "string" },
+          "city": { "type": "string" },
+          "state": { "type": "string" },
+          "pincode": { "type": "string" },
+          "ordered_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CustomerInput": {
+        "type": "object",
+        "required": ["customer_id"],
+        "properties": {
+          "customer_id": { "type": "string" },
+          "first_name": { "type": "string" },
+          "last_name": { "type": "string" },
+          "phone_no": { "type": "string" },
+          "address": { "type": "string" },
+          "city": { "type": "string" },
+          "state": { "type": "string" },
+          "pincode": { "type": "string" },
+          "ordered_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "MyOrder": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "order_id": { "type": "string", "format": "uuid" },
+          "product_id": { "type": "string", "format": "uuid" },
+          "product_name": { "type": "string" },
+          "amount_bought": { "type": "integer" },
+          "customer_details": { "type": "string" },
+          "currentstatus": { "type": "string" },
+          "shipping_date": { "type": "string", "format": "date-time" },
+          "payment_status": { "type": "string", "enum": ["pending", "paid"] }
+        }
+      },
+      "MyOrderInput": {
+        "type": "object",
+        "required": ["order_id", "product_id", "customer_details"],
+        "properties": {
+          "order_id": { "type": "string", "format": "uuid" },
+          "product_id": { "type": "string", "format": "uuid" },
+          "product_name": { "type": "string" },
+          "amount_bought": { "type": "integer" },
+          "customer_details": { "type": "string" },
+          "currentstatus": { "type": "string", "default": "ordered" },
+          "shipping_date": { "type": "string", "format": "date-time" },
+          "payment_status": { "type": "string", "default": "pending" }
+        }
+      },
+      "IndustryProfile": {
+        "type": "object",
+        "properties": {
+          "company_id": { "type": "string" },
+          "company_name": { "type": "string" },
+          "industry_type": { "type": "string" },
+          "Contact_person": { "type": "string" },
+          "email_address": { "type": "string" },
+          "phone_no": { "type": "string" },
+          "company_size": { "type": "string" },
+          "Budget": { "type": "integer" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "IndustryProfileInput": {
+        "type": "object",
+        "required": ["company_id", "company_name"],
+        "properties": {
+          "company_id": { "type": "string" },
+          "company_name": { "type": "string" },
+          "industry_type": { "type": "string" },
+          "Contact_person": { "type": "string" },
+          "email_address": { "type": "string" },
+          "phone_no": { "type": "string" },
+          "company_size": { "type": "string" },
+          "Budget": { "type": "integer" }
+        }
+      },
+      "IndustryOrder": {
+        "type": "object",
+        "properties": {
+          "order_id": { "type": "string", "format": "uuid" },
+          "industry_id": { "type": "string" },
+          "material_type": { "type": "string" },
+          "quantity": { "type": "number" },
+          "price": { "type": "number" },
+          "delivery_details": { "type": "string" },
+          "City": { "type": "string" },
+          "PIN_code": { "type": "string" },
+          "Prefered_Delivery_Date": { "type": "string", "format": "date" },
+          "Person_name": { "type": "string" },
+          "phone_no": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "IndustryOrderInput": {
+        "type": "object",
+        "required": ["industry_id", "material_type", "quantity"],
+        "properties": {
+          "industry_id": { "type": "string" },
+          "material_type": { "type": "string" },
+          "quantity": { "type": "number" },
+          "price": { "type": "number" },
+          "delivery_details": { "type": "string" },
+          "City": { "type": "string" },
+          "PIN_code": { "type": "string" },
+          "Prefered_Delivery_Date": { "type": "string", "format": "date" },
+          "Person_name": { "type": "string" },
+          "phone_no": { "type": "string" }
+        }
+      },
+      "SkilledLaborProfile": {
+        "type": "object",
+        "properties": {
+          "labor_id": { "type": "string" },
+          "first_name": { "type": "string" },
+          "last_name": { "type": "string" },
+          "address": { "type": "string" },
+          "city": { "type": "string" },
+          "state": { "type": "string" },
+          "pin_code": { "type": "integer" },
+          "skills": { "type": "array", "items": { "type": "string" } },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "SkilledLaborProfileInput": {
+        "type": "object",
+        "required": ["labor_id", "first_name", "last_name"],
+        "properties": {
+          "labor_id": { "type": "string" },
+          "first_name": { "type": "string" },
+          "last_name": { "type": "string" },
+          "address": { "type": "string" },
+          "city": { "type": "string" },
+          "state": { "type": "string" },
+          "pin_code": { "type": "integer" },
+          "skills": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "Notification": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "user_id": { "type": "string" },
+          "message": { "type": "string" },
+          "type": { "type": "string", "enum": ["connection", "inventory", "system"] },
+          "is_read": { "type": "boolean" },
+          "data": { "type": "object" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "NotificationInput": {
+        "type": "object",
+        "required": ["user_id", "message"],
+        "properties": {
+          "user_id": { "type": "string" },
+          "message": { "type": "string" },
+          "type": { "type": "string", "enum": ["connection", "inventory", "system"], "default": "system" },
+          "is_read": { "type": "boolean", "default": false },
+          "data": { "type": "object" }
+        }
+      },
+      "Connection": {
+        "type": "object",
+        "properties": {
+          "connection_id": { "type": "string", "format": "uuid" },
+          "requester_id": { "type": "string" },
+          "receiver_id": { "type": "string" },
+          "status": { "type": "string", "enum": ["pending", "accepted", "rejected"] },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ConnectionInput": {
+        "type": "object",
+        "required": ["requester_id", "receiver_id"],
+        "properties": {
+          "requester_id": { "type": "string" },
+          "receiver_id": { "type": "string" },
+          "status": { "type": "string", "enum": ["pending", "accepted", "rejected"], "default": "pending" }
+        }
+      },
+      "ScrapInventory": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "owner_id": { "type": "string" },
+          "category": { "type": "string" },
+          "material_type": { "type": "string" },
+          "quantity": { "type": "number" },
+          "amount": { "type": "string" },
+          "weight": { "type": "number" },
+          "unit": { "type": "string" },
+          "status": { "type": "string", "enum": ["collected", "sorted", "processed", "recycled", "upcycled"] },
+          "location": { "type": "string" },
+          "description": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ScrapInventoryInput": {
+        "type": "object",
+        "required": ["owner_id", "category"],
+        "properties": {
+          "owner_id": { "type": "string" },
+          "category": { "type": "string" },
+          "material_type": { "type": "string" },
+          "quantity": { "type": "number" },
+          "amount": { "type": "string" },
+          "weight": { "type": "number" },
+          "unit": { "type": "string" },
+          "status": { "type": "string", "enum": ["collected", "sorted", "processed", "recycled", "upcycled"], "default": "collected" },
+          "location": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      },
+      "ScrapDealerProfile": {
+        "type": "object",
+        "properties": {
+          "dealer_id": { "type": "string" },
+          "business_name": { "type": "string" },
+          "contact_person": { "type": "string" },
+          "email": { "type": "string" },
+          "phone": { "type": "string" },
+          "address": { "type": "string" },
+          "city": { "type": "string" },
+          "state": { "type": "string" },
+          "pin_code": { "type": "string" },
+          "established_year": { "type": "integer" },
+          "services": { "type": "array", "items": { "type": "string" } },
+          "certifications": { "type": "array", "items": { "type": "string" } },
+          "payment_methods": { "type": "array", "items": { "type": "string" } },
+          "facebook": { "type": "string" },
+          "instagram": { "type": "string" },
+          "twitter": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ScrapDealerProfileInput": {
+        "type": "object",
+        "required": ["dealer_id", "business_name"],
+        "properties": {
+          "dealer_id": { "type": "string" },
+          "business_name": { "type": "string" },
+          "contact_person": { "type": "string" },
+          "email": { "type": "string" },
+          "phone": { "type": "string" },
+          "address": { "type": "string" },
+          "city": { "type": "string" },
+          "state": { "type": "string" },
+          "pin_code": { "type": "string" },
+          "established_year": { "type": "integer" },
+          "services": { "type": "array", "items": { "type": "string" } },
+          "certifications": { "type": "array", "items": { "type": "string" } },
+          "payment_methods": { "type": "array", "items": { "type": "string" } },
+          "facebook": { "type": "string" },
+          "instagram": { "type": "string" },
+          "twitter": { "type": "string" }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "user_id": { "type": "string" },
+          "email": { "type": "string" },
+          "First name": { "type": "string" },
+          "Last_Name": { "type": "string" },
+          "Role": { "type": "string", "enum": ["consumer", "scrapdealer", "skilled_labour", "enterprise"] },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    "securitySchemes": {
+      "apiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "apikey"
+      },
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "apiKey": []
+    }
+  ]
+}
