@@ -146,13 +146,13 @@ function Ecom() {
     };
 
     const filteredProducts = products.filter(product => {
-        const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            product.description.toLowerCase().includes(searchTerm.toLowerCase());
+        const searchLower = searchTerm.toLowerCase().trim();
+        const nameMatch = product.name?.toLowerCase().includes(searchLower) || false;
+        const descMatch = product.description?.toLowerCase().includes(searchLower) || false;
+        const matchesSearch = !searchLower || nameMatch || descMatch;
         const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
-        console.log(`Filter: ${product.name}, matchesSearch=${matchesSearch}, matchesCategory=${matchesCategory}, category=${product.category}`);
         return matchesSearch && matchesCategory;
     });
-    console.log('Filtered products count:', filteredProducts.length);
 
     const renderStars = (rating) => {
         const stars = [];

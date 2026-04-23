@@ -45,6 +45,8 @@
   border: none;
   font-size: 18px;
   cursor: pointer;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .ecom-nav-actions {

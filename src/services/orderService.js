@@ -157,22 +157,22 @@ export const getAvailableProducts = async () => {
             console.error('Supabase query error:', error.message, error.code, error.details);
             throw error;
         }
-        
+
         console.log('All products from DB:', data);
-        
+
         // Filter products that still have stock available
         const availableProducts = (data || []).filter(product => {
             const quantity = parseInt(product.quantity) || 0;
-            const status = product.status;
-            // Exclude 'Sold' and 'incart' products only
-            // Treat any other status (Available, null, '', 'active', etc.) as available
-            const isExcludedStatus = status === 'Sold';
-            const hasStock = !isExcludedStatus && quantity > 0;
-            console.log(`Product ${product.name}: qty=${quantity}, status=${status}, hasStock=${hasStock}`);
-            return hasStock;
+            const status = (product.status || 'Available').trim();
+            // Exclude 'Sold' products only
+            const isSold = status === 'Sold';
+            const hasStock = quantity > 0;
+            const isAvailable = !isSold && hasStock;
+            console.log(`Product ${product.name}: qty=${quantity}, status="${status}", isSold=${isSold}, hasStock=${hasStock}, isAvailable=${isAvailable}`);
+            return isAvailable;
         });
-        
-        console.log('Filtered available products:', availableProducts);
+
+        console.log('Filtered available products:', availableProducts.length, 'of', data?.length || 0, 'total');
         return availableProducts;
     } catch (error) {
         console.error('Error fetching available products:', error);
