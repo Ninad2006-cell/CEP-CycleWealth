@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import SharedNavbar from "../components/SharedNavbar";
 import Footer from "../components/Footer";
-import { createOrGetIndustryProfile, getIndustryProfile, updateIndustryProfile } from "../services/enterpriseService";
+import { createOrGetIndustryProfile, getIndustryProfile, updateIndustryProfile, getPlatformStats } from "../services/enterpriseService";
 import "./Enterprise.css";
 
 function Enterprise() {
@@ -13,6 +13,13 @@ function Enterprise() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [profile, setProfile] = useState(null);
+    const [stats, setStats] = useState({
+        verifiedDealers: 0,
+        enterprisePartners: 0,
+        totalScrapTons: 0,
+        totalTransactions: 0
+    });
+    const [statsLoading, setStatsLoading] = useState(true);
     const [formData, setFormData] = useState({
         companyName: '',
         contactPerson: '',
@@ -37,7 +44,22 @@ function Enterprise() {
         } else {
             navigate('/login');
         }
+
+        // Fetch platform statistics
+        fetchPlatformStats();
     }, [navigate]);
+
+    const fetchPlatformStats = async () => {
+        setStatsLoading(true);
+        try {
+            const platformStats = await getPlatformStats();
+            setStats(platformStats);
+        } catch (err) {
+            console.error('Error fetching platform stats:', err);
+        } finally {
+            setStatsLoading(false);
+        }
+    };
 
     const checkExistingRegistration = async () => {
         try {
@@ -212,19 +234,19 @@ function Enterprise() {
             <div className="enterprise-stats">
                 <div className="stats-container">
                     <div className="stat">
-                        <h3>500+</h3>
+                        <h3>{statsLoading ? '...' : `${stats.verifiedDealers}+`}</h3>
                         <p>Verified Dealers</p>
                     </div>
                     <div className="stat">
-                        <h3>50,000+</h3>
+                        <h3>{statsLoading ? '...' : `${stats.totalScrapTons.toLocaleString()}+`}</h3>
                         <p>Tons of Scrap Processed</p>
                     </div>
                     <div className="stat">
-                        <h3>200+</h3>
+                        <h3>{statsLoading ? '...' : `${stats.enterprisePartners}+`}</h3>
                         <p>Enterprise Partners</p>
                     </div>
                     <div className="stat">
-                        <h3>₹10Cr+</h3>
+                        <h3>{statsLoading ? '...' : `₹${(stats.totalTransactions / 10000000).toFixed(1)}Cr+`}</h3>
                         <p>Monthly Transactions</p>
                     </div>
                 </div>

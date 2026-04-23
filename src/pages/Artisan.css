@@ -125,7 +125,7 @@
 /* Stats Section */
 .artisan-stats-section {
     background: white;
-    padding: 30px 35px;
+    padding: 20px 25px;
     border-radius: 12px;
     margin-bottom: 30px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
@@ -138,16 +138,25 @@
 }
 
 .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: 20px;
+    max-width: 600px;
+    margin: 0 auto;
 }
 
 .stat-card {
-    padding: 25px;
-    border-radius: 12px;
+    flex: 0 0 200px;
+    height: 90px;
+    border-radius: 10px;
     text-align: center;
     color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 .stat-card.listed {
@@ -167,17 +176,22 @@
 }
 
 .stat-value {
-    color: rgb(236, 233, 233);
-    font-size: 28px;
+    color: white;
+    font-size: 26px;
     font-weight: bold;
     text-align: center;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
+    line-height: 1;
 }
 
 .stat-label {
     color: white;
-    font-size: 14px;
+    font-size: 11px;
     opacity: 0.95;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: center;
+    line-height: 1.2;
 }
 
 /* Progress Section */
@@ -231,7 +245,7 @@
 /* Action Cards */
 .action-cards-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 25px;
     margin-bottom: 30px;
 }
@@ -556,20 +570,23 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 20px 40px;
+    padding: 15px 25px;
     background: #f8f9fa;
     border-radius: 10px;
 }
 
 .inv-stat .label {
-    font-size: 14px;
-    color: #666;
-    margin-bottom: 8px;
+    font-size: 11px;
+    opacity: 0.95;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .inv-stat .value {
-    font-size: 32px;
+    font-size: 24px;
     font-weight: 700;
+    margin-bottom: 3px;
 }
 
 .inv-stat .value.listed {
@@ -791,11 +808,32 @@
     }
 
     .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
+        max-width: 100%;
+        gap: 15px;
+    }
+
+    .stat-card {
+        flex: 0 0 45%;
+        max-width: 160px;
+        height: 80px;
+    }
+
+    .stat-value {
+        font-size: 24px;
+    }
+
+    .stat-label {
+        font-size: 10px;
     }
 
     .action-cards-grid {
         grid-template-columns: 1fr;
+    }
+
+    @media (max-width: 1024px) {
+        .action-cards-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
     }
 
     .form-row {
@@ -860,5 +898,248 @@
     opacity: 0.6;
     cursor: not-allowed;
     transform: none !important;
+}
+
+
+/* Contact Modal */
+.contact-modal {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 450px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.contact-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.contact-label {
+    font-size: 13px;
+    color: #666;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.contact-value {
+    font-size: 16px;
+    color: #333;
+    font-weight: 600;
+}
+
+.close-contact-btn {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, #0f9d58, #34d399);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.close-contact-btn:hover {
+    transform: scale(1.02);
+}
+
+/* Buy Scrap Modal */
+.buy-scrap-modal {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.loading-dealers,
+.no-dealers-found {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+    font-size: 16px;
+}
+
+/* Orders Card */
+.orders-card {
+    background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+    border: 2px solid #cbd5e1;
+}
+
+.orders-card:hover {
+    border-color: #64748b;
+    transform: translateY(-5px);
+}
+
+.action-btn.orders {
+    background: linear-gradient(135deg, #475569, #64748b);
+    color: white;
+}
+
+.action-btn.orders:hover {
+    background: linear-gradient(135deg, #334155, #475569);
+}
+
+/* My Orders Modal */
+.my-orders-modal {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.orders-content {
+    margin-top: 20px;
+}
+
+.loading-orders,
+.no-orders-found {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.no-orders-found p {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.no-orders-found span {
+    font-size: 14px;
+    color: #999;
+}
+
+.orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.order-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    background: #fafafa;
+    transition: all 0.3s ease;
+}
+
+.order-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.order-card.processing {
+    border-left: 4px solid #f59e0b;
+}
+
+.order-card.shipped {
+    border-left: 4px solid #10b981;
+}
+
+.order-card.delivered {
+    border-left: 4px solid #ef4444;
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.order-id {
+    font-weight: 600;
+    color: #374151;
+    font-size: 14px;
+}
+
+.order-status {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.order-status.processing {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.order-status.shipped {
+    background: #d1fae5;
+    color: #059669;
+}
+
+.order-status.delivered {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.order-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.detail-row .label {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.detail-row .value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.order-message {
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-top: 10px;
+}
+
+.order-message.success {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.order-message.declined {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.order-message.counter {
+    background: #fef3c7;
+    color: #92400e;
 }
 

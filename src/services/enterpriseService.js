@@ -1,4 +1,5 @@
 import supabaseClient from '../supabase-config';
+import { notifyScrapDealersOfEnterpriseOrder } from './notificationService';
 
 /**
  * Service for handling enterprise operations with Supabase
@@ -131,6 +132,25 @@ export const createIndustryOrder = async (orderData) => {
 
         if (error) throw error;
 
+        // Notify all scrap dealers about this new order
+        try {
+            console.log('About to notify scrap dealers for order:', data.order_id);
+            const notifyResult = await notifyScrapDealersOfEnterpriseOrder(data, profile.company_name);
+            console.log('Notification result:', notifyResult);
+            
+            if (!notifyResult.success) {
+                console.error('Notification failed:', notifyResult.error);
+            } else if (notifyResult.sent === 0) {
+                console.warn('No scrap dealers were notified - dealers list may be empty');
+            } else {
+                console.log(`Successfully notified ${notifyResult.sent} scrap dealers`);
+            }
+        } catch (notifyError) {
+            console.error('Error notifying scrap dealers (non-critical):', notifyError);
+            console.error('Full error:', JSON.stringify(notifyError, null, 2));
+            // Don't throw - notification failure shouldn't block order creation
+        }
+
         return data;
     } catch (error) {
         console.error('Error in createIndustryOrder:', error);
@@ -234,4 +254,103 @@ export const updateIndustryProfile = async (profileData) => {
         console.error('Error in updateIndustryProfile:', error);
         throw error;
     }
+};
+
+/**
+ * Get platform statistics for public display
+ * Fetches aggregated counts from various tables
+ * @returns {Promise<Object>} - Platform statistics object
+ */
+export const getPlatformStats = async () => {
+    let verifiedDealers = 0;
+    let enterprisePartners = 0;
+    let totalScrapTons = 0;
+    let totalTransactions = 0;
+
+    try {
+        // Fetch verified dealers count from users table where role = 'ScrapDealer'
+        const { count: dealersCount, error: dealersError } = await supabaseClient
+            .from('users')
+            .select('*', { count: 'exact', head: true })
+            .eq('role', 'ScrapDealer');
+
+        if (dealersError) {
+            console.error('Error fetching dealers count:', dealersError);
+        } else {
+            verifiedDealers = dealersCount || 0;
+        }
+    } catch (error) {
+        console.error('Error in dealers count query:', error);
+    }
+
+    try {
+        // Fetch enterprise partners count from industry_profile
+        const { count: enterprisesCount, error: enterprisesError } = await supabaseClient
+            .from('industry_profile')
+            .select('*', { count: 'exact', head: true });
+
+        if (enterprisesError) {
+            console.error('Error fetching enterprises count:', enterprisesError);
+        } else {
+            enterprisePartners = enterprisesCount || 0;
+        }
+    } catch (error) {
+        console.error('Error in enterprises count query:', error);
+    }
+
+    try {
+        // Fetch total scrap quantity from industry_order
+        const { data: scrapData, error: scrapError } = await supabaseClient
+            .from('industry_order')
+            .select('quantity');
+
+        if (scrapError) {
+            console.error('Error fetching scrap quantities:', scrapError);
+        } else if (scrapData) {
+            totalScrapTons = scrapData.reduce((sum, order) => {
+                return sum + (parseFloat(order.quantity) || 0);
+            }, 0);
+        }
+    } catch (error) {
+        console.error('Error in scrap quantity query:', error);
+    }
+
+    try {
+        // Fetch total transaction amount from orders table (fallback to industry_order if needed)
+        let ordersData = null;
+        let ordersError = null;
+
+        // Try orders table first
+        const ordersResult = await supabaseClient
+            .from('orders')
+            .select('total_amount');
+        ordersData = ordersResult.data;
+        ordersError = ordersResult.error;
+
+        if (ordersError && ordersError.code === '42P01') {
+            // Table doesn't exist, try customer_orders
+            const customerResult = await supabaseClient
+                .from('customer_orders')
+                .select('total_amount');
+            ordersData = customerResult.data;
+            ordersError = customerResult.error;
+        }
+
+        if (ordersError) {
+            console.error('Error fetching order amounts:', ordersError);
+        } else if (ordersData) {
+            totalTransactions = ordersData.reduce((sum, order) => {
+                return sum + (parseFloat(order.total_amount) || 0);
+            }, 0);
+        }
+    } catch (error) {
+        console.error('Error in transaction amount query:', error);
+    }
+
+    return {
+        verifiedDealers,
+        enterprisePartners,
+        totalScrapTons: Math.round(totalScrapTons),
+        totalTransactions: Math.round(totalTransactions)
+    };
 };

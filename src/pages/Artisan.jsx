@@ -12,7 +12,11 @@ import {
     getArtisanProducts,
     addArtisanProduct,
     updateArtisanProduct,
-    deleteArtisanProduct
+    deleteArtisanProduct,
+    getScrapDealers,
+    createScrapOrder,
+    sendScrapRequestNotification,
+    getMyScrapOrders
 } from '../services/artisanService';
 
 
@@ -27,6 +31,26 @@ function Artisan() {
     const [error, setError] = useState(null);
     const [savingProduct, setSavingProduct] = useState(false);
     const [savingProfile, setSavingProfile] = useState(false);
+    const [loadingDealers, setLoadingDealers] = useState(false);
+    const [submittingRequest, setSubmittingRequest] = useState(false);
+
+    // Contact modal state
+    const [showContactModal, setShowContactModal] = useState(false);
+    const [selectedDealer, setSelectedDealer] = useState(null);
+
+    // Buy Scrap modal state
+    const [showBuyScrapModal, setShowBuyScrapModal] = useState(false);
+    const [buyScrapForm, setBuyScrapForm] = useState({
+        materialType: '',
+        quantity: '',
+        offeredPrice: '',
+        notes: ''
+    });
+
+    // My Scrap Orders modal state
+    const [showMyOrdersModal, setShowMyOrdersModal] = useState(false);
+    const [myOrders, setMyOrders] = useState([]);
+    const [loadingOrders, setLoadingOrders] = useState(false);
 
     // Profile form state
     const [profileForm, setProfileForm] = useState({
@@ -39,13 +63,8 @@ function Artisan() {
         skills: ''
     });
 
-    // Mock scrap dealers for buying
-    const [scrapDealers] = useState([
-        { id: 1, name: "Green Earth Scrap", materials: "Paper, Plastic", price: "₹15/kg", location: "2.3 km", rating: 4.5 },
-        { id: 2, name: "Mumbai Scrap Hub", materials: "Metal, E-Waste", price: "₹45/kg", location: "3.1 km", rating: 4.2 },
-        { id: 3, name: "Recycle Mart", materials: "Glass, Plastic", price: "₹20/kg", location: "1.8 km", rating: 4.7 },
-        { id: 4, name: "Eco Scrap Dealers", materials: "All Types", price: "₹25/kg", location: "4.2 km", rating: 4.3 }
-    ]);
+    // Scrap dealers data - fetched from database
+    const [scrapDealers, setScrapDealers] = useState([]);
 
     // Products inventory tracking (loaded from database)
     const [myProducts, setMyProducts] = useState([]);
@@ -60,7 +79,20 @@ function Artisan() {
 
     useEffect(() => {
         loadArtisanData();
+        loadScrapDealers();
     }, [navigate]);
+
+    const loadScrapDealers = async () => {
+        setLoadingDealers(true);
+        try {
+            const dealers = await getScrapDealers();
+            setScrapDealers(dealers);
+        } catch (err) {
+            console.error('Error loading scrap dealers:', err);
+        } finally {
+            setLoadingDealers(false);
+        }
+    };
 
     const loadArtisanData = async () => {
         try {
@@ -93,6 +125,7 @@ function Artisan() {
             }
 
             setProfile({
+                user_id: user.user_id,
                 firstName: laborProfile?.first_name || user["First name"] || 'Artisan',
                 lastName: laborProfile?.last_name || user["Last_Name"] || '',
                 email: user.email_address,
@@ -135,6 +168,95 @@ function Artisan() {
         await supabaseClient.auth.signOut();
         sessionStorage.removeItem('user');
         navigate('/login');
+    };
+
+    // Contact modal handlers
+    const openContactModal = (dealer) => {
+        setSelectedDealer(dealer);
+        setShowContactModal(true);
+    };
+
+    const closeContactModal = () => {
+        setShowContactModal(false);
+        setSelectedDealer(null);
+    };
+
+    // Buy Scrap modal handlers
+    const openBuyScrapModal = (dealer) => {
+        setSelectedDealer(dealer);
+        setBuyScrapForm({
+            materialType: '',
+            quantity: '',
+            offeredPrice: '',
+            notes: ''
+        });
+        setShowBuyScrapModal(true);
+    };
+
+    const closeBuyScrapModal = () => {
+        setShowBuyScrapModal(false);
+        setSelectedDealer(null);
+        setBuyScrapForm({
+            materialType: '',
+            quantity: '',
+            offeredPrice: '',
+            notes: ''
+        });
+    };
+
+    // My Scrap Orders modal handlers
+    const openMyOrdersModal = async () => {
+        setShowMyOrdersModal(true);
+        setLoadingOrders(true);
+        try {
+            const orders = await getMyScrapOrders();
+            setMyOrders(orders || []);
+        } catch (err) {
+            console.error('Error fetching orders:', err);
+        } finally {
+            setLoadingOrders(false);
+        }
+    };
+
+    const closeMyOrdersModal = () => {
+        setShowMyOrdersModal(false);
+        setMyOrders([]);
+    };
+
+    const handleBuyScrapSubmit = async (e) => {
+        e.preventDefault();
+        if (!selectedDealer) return;
+
+        setSubmittingRequest(true);
+        setError(null);
+
+        try {
+            // Create order in database
+            const { orderId } = await createScrapOrder({
+                dealerId: selectedDealer.id,
+                materialType: buyScrapForm.materialType,
+                quantity: buyScrapForm.quantity,
+                offeredPrice: parseFloat(buyScrapForm.offeredPrice),
+                notes: buyScrapForm.notes
+            });
+
+            // Send notification to dealer
+            await sendScrapRequestNotification(selectedDealer.id, {
+                orderId: orderId,
+                materialType: buyScrapForm.materialType,
+                quantity: buyScrapForm.quantity,
+                offeredPrice: parseFloat(buyScrapForm.offeredPrice),
+                notes: buyScrapForm.notes
+            });
+
+            alert('Scrap request sent successfully! The dealer will be notified.');
+            closeBuyScrapModal();
+        } catch (err) {
+            console.error('Error sending scrap request:', err);
+            setError('Failed to send scrap request. Please try again.');
+        } finally {
+            setSubmittingRequest(false);
+        }
     };
 
     const closeSellModal = () => {
@@ -419,6 +541,12 @@ function Artisan() {
                                 <p>List your upcycled products for eco-conscious consumers</p>
                                 <button className="action-btn secondary">Add Product</button>
                             </div>
+                            <div className="action-card orders-card" onClick={openMyOrdersModal}>
+                                <div className="action-icon">📦</div>
+                                <h3>My Scrap Orders</h3>
+                                <p>View your scrap purchase history and dealer responses</p>
+                                <button className="action-btn orders">View Orders</button>
+                            </div>
                         </div>
                     </>
                 )}
@@ -429,6 +557,11 @@ function Artisan() {
                         <h2>♻️ Buy Scrap Materials</h2>
                         <p className="section-subtitle">Find scrap dealers near you for raw materials</p>
 
+                        {loadingDealers ? (
+                            <div className="loading-dealers">Loading scrap dealers...</div>
+                        ) : scrapDealers.length === 0 ? (
+                            <div className="no-dealers-found">No scrap dealers found.</div>
+                        ) : (
                         <div className="scrap-dealers-list">
                             {scrapDealers.map(dealer => (
                                 <div key={dealer.id} className="dealer-card">
@@ -440,12 +573,13 @@ function Artisan() {
                                         <span className="distance">📍 {dealer.location}</span>
                                     </div>
                                     <div className="dealer-actions">
-                                        <button className="buy-scrap-btn">Buy Scrap</button>
-                                        <button className="contact-btn">Get Contact</button>
+                                        <button className="buy-scrap-btn" onClick={() => openBuyScrapModal(dealer)}>Buy Scrap</button>
+                                        <button className="contact-btn" onClick={() => openContactModal(dealer)}>Get Contact</button>
                                     </div>
                                 </div>
                             ))}
                         </div>
+                        )}
                     </div>
                 )}
 
@@ -508,7 +642,7 @@ function Artisan() {
                             </div>
                             <div className="inv-stat">
                                 <span className="label">Remaining</span>
-                                <span className="value remaining">{totalListed - totalSold}</span>
+                                <span className="value remaining">{Math.max(0, totalListed - totalSold)}</span>
                             </div>
                         </div>
 
@@ -684,6 +818,174 @@ function Artisan() {
                                 {savingProfile ? 'Saving...' : 'Save Profile'}
                             </button>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Contact Modal */}
+            {showContactModal && selectedDealer && (
+                <div className="modal-overlay" onClick={closeContactModal}>
+                    <div className="contact-modal" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>📞 Contact Information</h2>
+                            <button className="close-modal" onClick={closeContactModal}>×</button>
+                        </div>
+                        <div className="contact-info">
+                            <div className="contact-item">
+                                <span className="contact-label">Business Name:</span>
+                                <span className="contact-value">{selectedDealer.name}</span>
+                            </div>
+                            <div className="contact-item">
+                                <span className="contact-label">Phone Number:</span>
+                                <span className="contact-value">{selectedDealer.contact}</span>
+                            </div>
+                            <div className="contact-item">
+                                <span className="contact-label">Email:</span>
+                                <span className="contact-value">{selectedDealer.email}</span>
+                            </div>
+                            <div className="contact-item">
+                                <span className="contact-label">Location:</span>
+                                <span className="contact-value">{selectedDealer.location}</span>
+                            </div>
+                            <div className="contact-item">
+                                <span className="contact-label">Working Hours:</span>
+                                <span className="contact-value">{selectedDealer.workingHours}</span>
+                            </div>
+                        </div>
+                        <button className="close-contact-btn" onClick={closeContactModal}>Close</button>
+                    </div>
+                </div>
+            )}
+
+            {/* Buy Scrap Modal */}
+            {showBuyScrapModal && selectedDealer && (
+                <div className="modal-overlay" onClick={closeBuyScrapModal}>
+                    <div className="buy-scrap-modal" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>♻️ Buy Scrap from {selectedDealer.name}</h2>
+                            <button className="close-modal" onClick={closeBuyScrapModal}>×</button>
+                        </div>
+                        <form onSubmit={handleBuyScrapSubmit}>
+                            {error && (
+                                <div className="form-error-banner" style={{ background: '#fee2e2', color: '#dc2626', padding: '12px', marginBottom: '15px', borderRadius: '8px', fontSize: '14px' }}>
+                                    {error}
+                                </div>
+                            )}
+                            <div className="form-group">
+                                <label>Material Type Needed *</label>
+                                <select
+                                    value={buyScrapForm.materialType}
+                                    onChange={e => setBuyScrapForm({ ...buyScrapForm, materialType: e.target.value })}
+                                    required
+                                >
+                                    <option value="">Select material...</option>
+                                    <option value="Paper">Paper / Cardboard</option>
+                                    <option value="Plastic">Plastic / PET</option>
+                                    <option value="Metal">Metal / Iron / Steel</option>
+                                    <option value="E-Waste">E-Waste / Electronics</option>
+                                    <option value="Glass">Glass / Bottles</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label>Quantity Needed *</label>
+                                <input
+                                    type="text"
+                                    value={buyScrapForm.quantity}
+                                    onChange={e => setBuyScrapForm({ ...buyScrapForm, quantity: e.target.value })}
+                                    placeholder="e.g., 10 kg, 50 pieces"
+                                    required
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Price You Can Offer (₹/kg) *</label>
+                                <input
+                                    type="number"
+                                    value={buyScrapForm.offeredPrice}
+                                    onChange={e => setBuyScrapForm({ ...buyScrapForm, offeredPrice: e.target.value })}
+                                    placeholder="e.g., 25"
+                                    required
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Additional Notes</label>
+                                <textarea
+                                    value={buyScrapForm.notes}
+                                    onChange={e => setBuyScrapForm({ ...buyScrapForm, notes: e.target.value })}
+                                    placeholder="Any specific requirements, quality preferences, etc."
+                                    rows="3"
+                                />
+                            </div>
+                            <button type="submit" className="submit-product-btn" disabled={submittingRequest}>
+                                {submittingRequest ? 'Sending Request...' : 'Send Request to Dealer'}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* My Scrap Orders Modal */}
+            {showMyOrdersModal && (
+                <div className="modal-overlay" onClick={closeMyOrdersModal}>
+                    <div className="my-orders-modal" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>📦 My Scrap Orders</h2>
+                            <button className="close-modal" onClick={closeMyOrdersModal}>&times;</button>
+                        </div>
+                        <div className="orders-content">
+                            {loadingOrders ? (
+                                <div className="loading-orders">Loading your orders...</div>
+                            ) : myOrders.length === 0 ? (
+                                <div className="no-orders-found">
+                                    <p>No scrap orders found.</p>
+                                    <span>Start buying scrap from dealers!</span>
+                                </div>
+                            ) : (
+                                <div className="orders-list">
+                                    {myOrders.map(order => (
+                                        <div key={order.order_id} className={`order-card ${order.order_status}`}>
+                                            <div className="order-header">
+                                                <span className="order-id">Order #{order.order_id?.slice(0, 8)}</span>
+                                                <span className={`order-status ${order.order_status}`}>
+                                                    {order.order_status === 'processing' ? '⏳ Pending' :
+                                                        order.order_status === 'shipped' ? '✅ Accepted' :
+                                                            order.order_status === 'delivered' ? '❌ Declined' : order.order_status}
+                                                </span>
+                                            </div>
+                                            <div className="order-details">
+                                                <div className="detail-row">
+                                                    <span className="label">Dealer:</span>
+                                                    <span className="value">{order.dealer_name || 'Unknown Dealer'}</span>
+                                                </div>
+                                                <div className="detail-row">
+                                                    <span className="label">Amount:</span>
+                                                    <span className="value">₹{order.total_amount}/kg</span>
+                                                </div>
+                                                <div className="detail-row">
+                                                    <span className="label">Date:</span>
+                                                    <span className="value">{new Date(order.created_at).toLocaleDateString()}</span>
+                                                </div>
+                                            </div>
+                                            {order.order_status === 'shipped' && (
+                                                <div className="order-message success">
+                                                    Dealer accepted your offer! You can now coordinate pickup.
+                                                </div>
+                                            )}
+                                            {order.order_status === 'delivered' && (
+                                                <div className="order-message declined">
+                                                    Dealer declined your offer. Try another dealer or adjust your offer.
+                                                </div>
+                                            )}
+                                            {order.counter_price && (
+                                                <div className="order-message counter">
+                                                    Dealer counter offered: ₹{order.counter_price}/kg
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}

@@ -17,10 +17,15 @@ import {
     Landmark,
     Navigation,
     Home,
-    LocateFixed
+    LocateFixed,
+    Package,
+    CheckCircle,
+    Clock,
+    DollarSign
 } from 'lucide-react';
 import './scrapDealer.css';
 import Navbar2 from '../components/Navbar2';
+import { getPendingEnterpriseOrders, acceptEnterpriseOrder } from '../services/notificationService';
 
 function ScrapDealer() {
     const navigate = useNavigate();
@@ -74,6 +79,9 @@ function ScrapDealer() {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [enterpriseOrders, setEnterpriseOrders] = useState([]);
+    const [ordersLoading, setOrdersLoading] = useState(false);
+    const [acceptingOrder, setAcceptingOrder] = useState(null);
 
     // Available services and payment methods
     const availableServices = [
@@ -277,10 +285,48 @@ function ScrapDealer() {
         setSuccess('');
     };
 
+    const fetchEnterpriseOrders = async () => {
+        setOrdersLoading(true);
+        try {
+            const { data, error } = await getPendingEnterpriseOrders();
+            if (error) throw new Error(error);
+            // Filter to show only pending orders or orders assigned to this dealer
+            const dealerId = currentUser?.user_id;
+            const relevantOrders = data.filter(order =>
+                order.status === 'pending' || order.assigned_dealer_id === dealerId
+            );
+            setEnterpriseOrders(relevantOrders);
+        } catch (err) {
+            console.error('Error fetching enterprise orders:', err);
+            setError('Failed to load enterprise orders');
+        } finally {
+            setOrdersLoading(false);
+        }
+    };
+
+    const handleAcceptOrder = async (orderId) => {
+        setAcceptingOrder(orderId);
+        try {
+            const result = await acceptEnterpriseOrder(orderId, currentUser.user_id);
+            if (result.success) {
+                setSuccess('Order accepted successfully! The enterprise has been notified.');
+                // Refresh orders list
+                await fetchEnterpriseOrders();
+            } else {
+                setError(result.error || 'Failed to accept order');
+            }
+        } catch (err) {
+            console.error('Error accepting order:', err);
+            setError('Failed to accept order. Please try again.');
+        } finally {
+            setAcceptingOrder(null);
+        }
+    };
+
     if (loading) {
         return (
             <div className="profile-page">
-                <SharedNavbar activeLink="profile" />
+                <SharedNavbar activeLink="profile" user={currentUser}/>
                 <div className="profile-loading">
                     <div className="spinner"></div>
                     <p>Loading profile...</p>
@@ -291,7 +337,7 @@ function ScrapDealer() {
 
     return (
         <div className="profile-page">
-            <Navbar2 activeLink="profile"/>
+            <Navbar2 activeLink="profile" user={currentUser}/>
             <div className="profile-container">
                 
                 {/* Profile Header Card */}
@@ -428,23 +474,32 @@ function ScrapDealer() {
                     {/* Partners Section */}
                     <div className="card">
                         <div className="tabs-container">
-                            <div 
+                            <div
                                 className={`tab ${activeTab === 'companies' ? 'active' : ''}`}
                                 onClick={() => setActiveTab('companies')}
                             >
                                 Corporate partners
                             </div>
-                            <div 
+                            <div
                                 className={`tab ${activeTab === 'artisans' ? 'active' : ''}`}
                                 onClick={() => setActiveTab('artisans')}
                             >
                                 Skilled artisans
                             </div>
-                            <div 
+                            <div
                                 className={`tab ${activeTab === 'suppliers' ? 'active' : ''}`}
                                 onClick={() => setActiveTab('suppliers')}
                             >
                                 Suppliers
+                            </div>
+                            <div
+                                className={`tab ${activeTab === 'enterpriseOrders' ? 'active' : ''}`}
+                                onClick={() => {
+                                    setActiveTab('enterpriseOrders');
+                                    fetchEnterpriseOrders();
+                                }}
+                            >
+                                Enterprise Orders
                             </div>
                         </div>
 
@@ -513,6 +568,151 @@ function ScrapDealer() {
                                     ))
                                 ) : (
                                     <p className="no-connections">No suppliers added yet.</p>
+                                )}
+                            </div>
+                        )}
+
+                        {activeTab === 'enterpriseOrders' && (
+                            <div className="enterprise-orders-section">
+                                {ordersLoading ? (
+                                    <div className="orders-loading" style={{ textAlign: 'center', padding: '2rem' }}>
+                                        <div className="spinner"></div>
+                                        <p>Loading enterprise orders...</p>
+                                    </div>
+                                ) : enterpriseOrders.length === 0 ? (
+                                    <div className="no-orders" style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+                                        <Package size={48} style={{ marginBottom: '1rem', opacity: 0.5 }} />
+                                        <p>No pending enterprise orders at the moment.</p>
+                                        <p style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
+                                            When enterprises place scrap orders, they will appear here.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="orders-list">
+                                        {enterpriseOrders.map((order) => (
+                                            <div key={order.order_id} className="order-card" style={{
+                                                border: '1px solid #e5e7eb',
+                                                borderRadius: '12px',
+                                                padding: '1.5rem',
+                                                marginBottom: '1rem',
+                                                background: order.assigned_dealer_id === currentUser?.user_id ? '#f0fdf4' : '#ffffff'
+                                            }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                                                    <div>
+                                                        <h4 style={{ margin: '0 0 0.5rem 0', color: '#1f2937' }}>
+                                                            {order.industry_profile?.company_name || 'Unknown Company'}
+                                                        </h4>
+                                                        <span style={{
+                                                            display: 'inline-flex',
+                                                            alignItems: 'center',
+                                                            gap: '0.5rem',
+                                                            fontSize: '0.875rem',
+                                                            color: '#6b7280'
+                                                        }}>
+                                                            <Factory size={14} />
+                                                            {order.industry_profile?.industry_type || 'Enterprise'}
+                                                        </span>
+                                                    </div>
+                                                    <span className={`badge ${order.status === 'pending' ? 'badge-warning' : 'badge-success'}`}>
+                                                        {order.status === 'pending' ? (
+                                                            <><Clock size={12} style={{ marginRight: '4px' }} /> Pending</>
+                                                        ) : (
+                                                            <><CheckCircle size={12} style={{ marginRight: '4px' }} /> Accepted</>
+                                                        )}
+                                                    </span>
+                                                </div>
+
+                                                <div style={{
+                                                    display: 'grid',
+                                                    gridTemplateColumns: 'repeat(3, 1fr)',
+                                                    gap: '1rem',
+                                                    marginBottom: '1rem',
+                                                    padding: '1rem',
+                                                    background: '#f9fafb',
+                                                    borderRadius: '8px'
+                                                }}>
+                                                    <div>
+                                                        <small style={{ color: '#6b7280', display: 'block', marginBottom: '0.25rem' }}>
+                                                            <Recycle size={12} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                                                            Material
+                                                        </small>
+                                                        <strong style={{ color: '#1f2937' }}>{order.material_type}</strong>
+                                                    </div>
+                                                    <div>
+                                                        <small style={{ color: '#6b7280', display: 'block', marginBottom: '0.25rem' }}>
+                                                            <Package size={12} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                                                            Quantity
+                                                        </small>
+                                                        <strong style={{ color: '#1f2937' }}>{order.quantity}</strong>
+                                                    </div>
+                                                    <div>
+                                                        <small style={{ color: '#6b7280', display: 'block', marginBottom: '0.25rem' }}>
+                                                            <DollarSign size={12} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                                                            Price
+                                                        </small>
+                                                        <strong style={{ color: '#1f2937' }}>
+                                                            {order.price ? `₹${order.price}` : 'Negotiable'}
+                                                        </strong>
+                                                    </div>
+                                                </div>
+
+                                                <div style={{ marginBottom: '1rem' }}>
+                                                    <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', color: '#374151' }}>
+                                                        <MapPin size={14} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
+                                                        <strong>Delivery:</strong> {order.delivery_details}, {order['City']} - {order['PIN_code']}
+                                                    </p>
+                                                    <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', color: '#374151' }}>
+                                                        <User size={14} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
+                                                        <strong>Contact:</strong> {order['Person_name']} ({order.phone_no})
+                                                    </p>
+                                                    <p style={{ margin: '0', fontSize: '0.875rem', color: '#374151' }}>
+                                                        <Clock size={14} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
+                                                        <strong>Preferred Delivery:</strong> {order['Prefered_Delivery_Date']}
+                                                    </p>
+                                                </div>
+
+                                                {order.status === 'pending' && (
+                                                    <button
+                                                        onClick={() => handleAcceptOrder(order.order_id)}
+                                                        disabled={acceptingOrder === order.order_id}
+                                                        style={{
+                                                            width: '100%',
+                                                            padding: '0.75rem',
+                                                            background: '#0f9d58',
+                                                            color: 'white',
+                                                            border: 'none',
+                                                            borderRadius: '8px',
+                                                            fontSize: '0.875rem',
+                                                            fontWeight: '600',
+                                                            cursor: acceptingOrder === order.order_id ? 'not-allowed' : 'pointer',
+                                                            opacity: acceptingOrder === order.order_id ? 0.7 : 1
+                                                        }}
+                                                    >
+                                                        {acceptingOrder === order.order_id ? (
+                                                            <>Accepting...</>
+                                                        ) : (
+                                                            <><CheckCircle size={16} style={{ marginRight: '6px', verticalAlign: 'middle' }} /> Accept Order</>
+                                                        )}
+                                                    </button>
+                                                )}
+
+                                                {order.assigned_dealer_id === currentUser?.user_id && (
+                                                    <div style={{
+                                                        padding: '0.75rem',
+                                                        background: '#dcfce7',
+                                                        borderRadius: '8px',
+                                                        textAlign: 'center',
+                                                        color: '#166534',
+                                                        fontSize: '0.875rem',
+                                                        fontWeight: '500'
+                                                    }}>
+                                                        <CheckCircle size={16} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
+                                                        You have accepted this order. Fulfill by {order['Prefered_Delivery_Date']}.
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
                                 )}
                             </div>
                         )}
