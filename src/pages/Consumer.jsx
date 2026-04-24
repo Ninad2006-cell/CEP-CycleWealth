@@ -19,6 +19,12 @@ function Consumer() {
     const [userLocation, setUserLocation] = useState(null);
     const [showContactModal, setShowContactModal] = useState(false);
     const [selectedDealer, setSelectedDealer] = useState(null);
+    const [showUpcycleModal, setShowUpcycleModal] = useState(false);
+    const [upcycleForm, setUpcycleForm] = useState({
+        scrapType: '',
+        quantity: '',
+        description: ''
+    });
 
     // Haversine formula to calculate distance between two coordinates
     const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -198,6 +204,53 @@ function Consumer() {
     const callDealer = () => {
         if (selectedDealer?.phone) {
             window.location.href = `tel:${selectedDealer.phone}`;
+        }
+    };
+
+    // Handle Send for Upcycling button click
+    const handleSendForUpcycling = (dealer) => {
+        setSelectedDealer(dealer);
+        setUpcycleForm({ scrapType: '', quantity: '', description: '' });
+        setShowUpcycleModal(true);
+    };
+
+    // Close upcycle modal
+    const closeUpcycleModal = () => {
+        setShowUpcycleModal(false);
+        setSelectedDealer(null);
+        setUpcycleForm({ scrapType: '', quantity: '', description: '' });
+    };
+
+    // Submit upcycling request
+    const submitUpcycleRequest = async () => {
+        if (!upcycleForm.scrapType || !upcycleForm.quantity) {
+            alert('Please fill in scrap type and quantity');
+            return;
+        }
+
+        try {
+            const sessionUser = sessionStorage.getItem('user');
+            const user = JSON.parse(sessionUser);
+
+            const { error } = await supabaseClient
+                .from('upcycling_requests')
+                .insert([{
+                    consumer_id: user.user_id,
+                    dealer_id: selectedDealer.id,
+                    scrap_type: upcycleForm.scrapType,
+                    quantity_kg: parseFloat(upcycleForm.quantity),
+                    description: upcycleForm.description,
+                    status: 'pending',
+                    created_at: new Date().toISOString()
+                }]);
+
+            if (error) throw error;
+
+            alert('Upcycling request sent successfully!');
+            closeUpcycleModal();
+        } catch (err) {
+            console.error('Error sending upcycling request:', err);
+            alert('Failed to send request. Please try again.');
         }
     };
 
@@ -429,6 +482,10 @@ function Consumer() {
                                             <span className="call-icon">📞</span>
                                             Get Contact Number
                                         </button>
+                                        <button className="send-upcycle-btn" onClick={() => handleSendForUpcycling(dealer)}>
+                                            <span className="upcycle-icon">♻️</span>
+                                            Send for Upcycling
+                                        </button>
                                         <button className="view-location-btn" onClick={() => handleViewLocation(dealer)}>
                                             <span className="location-icon">📍</span>
                                             View Location
@@ -489,6 +546,69 @@ function Consumer() {
                                         📞 Call Now
                                     </button>
                                 )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Upcycling Request Modal */}
+                {showUpcycleModal && selectedDealer && (
+                    <div className="contact-modal-overlay" onClick={closeUpcycleModal}>
+                        <div className="contact-modal" onClick={(e) => e.stopPropagation()}>
+                            <div className="contact-modal-header upcycle-header">
+                                <h3>♻️ Send for Upcycling</h3>
+                                <button className="close-btn" onClick={closeUpcycleModal}>×</button>
+                            </div>
+                            <div className="contact-modal-content">
+                                <div className="dealer-info">
+                                    <h4>{selectedDealer.name}</h4>
+                                    <p className="dealer-owner">Send your scrap for upcycling</p>
+                                </div>
+                                <div className="upcycle-form">
+                                    <div className="form-group">
+                                        <label>Scrap Type:</label>
+                                        <select
+                                            value={upcycleForm.scrapType}
+                                            onChange={(e) => setUpcycleForm({...upcycleForm, scrapType: e.target.value})}
+                                            className="form-select"
+                                        >
+                                            <option value="">-- Select scrap type --</option>
+                                            <option value="Paper">Paper</option>
+                                            <option value="Plastic">Plastic</option>
+                                            <option value="Metal">Metal</option>
+                                            <option value="Glass">Glass</option>
+                                            <option value="E-Waste">E-Waste</option>
+                                            <option value="Textile">Textile</option>
+                                            <option value="Wood">Wood</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Quantity (kg):</label>
+                                        <input
+                                            type="number"
+                                            value={upcycleForm.quantity}
+                                            onChange={(e) => setUpcycleForm({...upcycleForm, quantity: e.target.value})}
+                                            placeholder="Enter quantity in kg"
+                                            className="form-input"
+                                            min="0.1"
+                                            step="0.1"
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label>Description (optional):</label>
+                                        <textarea
+                                            value={upcycleForm.description}
+                                            onChange={(e) => setUpcycleForm({...upcycleForm, description: e.target.value})}
+                                            placeholder="Describe your scrap materials..."
+                                            className="form-textarea"
+                                            rows="3"
+                                        />
+                                    </div>
+                                </div>
+                                <button className="call-now-btn upcycle-submit-btn" onClick={submitUpcycleRequest}>
+                                    ♻️ Send Request
+                                </button>
                             </div>
                         </div>
                     </div>
