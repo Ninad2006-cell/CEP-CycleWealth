@@ -152,7 +152,7 @@ function CompanyOrder() {
                                 <button 
                                     className="add-item-btn"
                                     onClick={() => navigate('/orderhistory')}
-                                    style={{ background: '#3b82f6' }}
+                                    // style={{ background: '#f4f8f9' }}
                                 >
                                     📦 View All Orders
                                 </button>
