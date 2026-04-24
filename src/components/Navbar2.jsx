@@ -12,6 +12,17 @@ function Navbar2({ activeLink = null, badgeCount = 0, user = null }) {
         setIsEnterpriseRegistered(enterpriseRegistered === 'true');
     }, []);
 
+    // Determine home route based on user role
+    const getHomeRoute = () => {
+        if (!user) return '/';
+        const role = user.role;
+        if (role === 'ScrapDealer') return '/scrapdealer';
+        if (role === 'SkilledLabor') return '/artisan';
+        if (role === 'Industry') return '/enterprise';
+        if (role === 'Consumer') return '/consumer';
+        return '/';
+    };
+
     const handleLogin = () => {
         navigate('/login');
     };
@@ -26,14 +37,16 @@ function Navbar2({ activeLink = null, badgeCount = 0, user = null }) {
         navigate('/login');
     };
 
+    const homeRoute = getHomeRoute();
+
     return (
         <nav className="shared-nav">
             <span className="shared-nav__logo">&#9851; CycleWealth</span>
             <div className="shared-nav__links">
-                <Link to="/scrapdealer" className={`shared-nav__link ${activeLink === 'home' ? 'shared-nav__link--active' : ''}`}>
+                <Link to={homeRoute} className={`shared-nav__link ${activeLink === 'home' ? 'shared-nav__link--active' : ''}`}>
                     Home
                 </Link>
-                <Link to="/scrapdealer" className={`shared-nav__link ${activeLink === 'transactions' ? 'shared-nav__link--active' : ''}`}>
+                <Link to={homeRoute} className={`shared-nav__link ${activeLink === 'transactions' ? 'shared-nav__link--active' : ''}`}>
                     Transactions
                 </Link>
                 <Link to="/connections" className={`shared-nav__link ${activeLink === 'connections' ? 'shared-nav__link--active' : ''}`}>

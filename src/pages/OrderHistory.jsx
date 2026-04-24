@@ -78,7 +78,7 @@ function OrderHistory() {
 
     return (
         <>
-            <SharedNavbar />
+            <SharedNavbar user={user} activeLink="enterprise" />
             <div className="order-history-page">
                 <div className="order-history-header">
                     <h1>Order Management</h1>

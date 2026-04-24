@@ -444,6 +444,7 @@ function Artisan() {
                     <a href="#" onClick={() => setActiveTab('buy')}>Buy Scrap</a>
                     <a href="#" onClick={() => setActiveTab('sell')}>Sell Products</a>
                     <a href="#" onClick={() => setActiveTab('inventory')}>Inventory</a>
+                    <a href="#" onClick={() => navigate('/connections')}>Connections</a>
                     <a href="#" onClick={openProfileModal}>Profile</a>
                 </div>
                 <div className="auth-buttons">
@@ -546,6 +547,12 @@ function Artisan() {
                                 <h3>My Scrap Orders</h3>
                                 <p>View your scrap purchase history and dealer responses</p>
                                 <button className="action-btn orders">View Orders</button>
+                            </div>
+                            <div className="action-card connections-card" onClick={() => navigate('/connections')}>
+                                <div className="action-icon">🤝</div>
+                                <h3>My Connections</h3>
+                                <p>Connect with industries, dealers, and other artisans</p>
+                                <button className="action-btn connections">View Network</button>
                             </div>
                         </div>
                     </>

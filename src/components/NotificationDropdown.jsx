@@ -22,8 +22,11 @@ import {
     scrapDealerAcceptEnterpriseCounter,
     scrapDealerRejectEnterpriseCounter,
     scrapDealerCounterBackToEnterprise,
-    updateNotificationData
+    updateNotificationData,
+    sendConnectionAcceptedNotification,
+    sendConnectionRejectedNotification
 } from '../services/notificationService';
+import supabaseClient from '../supabase-config';
 import './NotificationDropdown.css';
 
 const NotificationDropdown = ({ user }) => {
@@ -196,6 +199,60 @@ const NotificationDropdown = ({ user }) => {
             alert(message);
         } else {
             alert('Failed to respond: ' + error);
+        }
+    };
+
+    // Handle connection request response (accept/decline)
+    const handleConnectionResponse = async (e, notification, status) => {
+        e.stopPropagation();
+
+        const requesterId = notification.data?.requesterId || notification.data?.requester_id;
+        const receiverId = user?.user_id;
+        
+        if (!requesterId || !receiverId) {
+            alert('Invalid connection data');
+            return;
+        }
+
+        try {
+            // Update connection status in database
+            const { error } = await supabaseClient
+                .from('connections')
+                .update({ status })
+                .eq('requester_id', requesterId)
+                .eq('receiver_id', receiverId);
+
+            if (error) throw error;
+
+            // Send notification to requester
+            const receiverName = `${user['First name']} ${user['Last_Name']}`;
+            const receiverRole = user.role;
+            
+            if (status === 'accepted') {
+                await sendConnectionAcceptedNotification(requesterId, receiverName, receiverRole);
+            } else {
+                await sendConnectionRejectedNotification(requesterId, receiverName, receiverRole);
+            }
+
+            // Persist notification status
+            await updateNotificationData(notification.id, {
+                status,
+                requires_action: false
+            });
+
+            // Update local state
+            setNotifications(prev =>
+                prev.map(n =>
+                    n.id === notification.id
+                        ? { ...n, data: { ...n.data, status, requires_action: false } }
+                        : n
+                )
+            );
+
+            alert(status === 'accepted' ? 'Connection accepted!' : 'Connection declined');
+        } catch (err) {
+            console.error('Error handling connection response:', err);
+            alert('Failed to process connection response');
         }
     };
 
@@ -648,6 +705,44 @@ const NotificationDropdown = ({ user }) => {
                                                                 notification.data?.status === 'countered' ? '↻ Countered' : ''}
                                                     </span>
                                                 )}
+                                            </div>
+                                        )}
+
+                                        {/* Connection Request Action Buttons */}
+                                        {notification.data?.action === 'connection_request' && notification.data?.requires_action && (
+                                            <div className="notification-actions-row">
+                                                {notification.data?.status === 'pending' || !notification.data?.status ? (
+                                                    <>
+                                                        <button
+                                                            className="action-btn-accept"
+                                                            onClick={(e) => handleConnectionResponse(e, notification, 'accepted')}
+                                                        >
+                                                            ✓ Accept
+                                                        </button>
+                                                        <button
+                                                            className="action-btn-decline"
+                                                            onClick={(e) => handleConnectionResponse(e, notification, 'rejected')}
+                                                        >
+                                                            ✕ Decline
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <span className={`status-badge ${notification.data?.status}`}>
+                                                        {notification.data?.status === 'accepted' ? '✓ Connected' :
+                                                            notification.data?.status === 'rejected' ? '✕ Declined' : ''}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {/* Connection Accepted/Rejected Status */}
+                                        {(notification.data?.action === 'connection_accepted' ||
+                                          notification.data?.action === 'connection_rejected') && (
+                                            <div className="notification-actions-row">
+                                                <span className={`status-badge ${notification.data?.status}`}>
+                                                    {notification.data?.status === 'accepted' ? '✓ Connection Accepted' :
+                                                        notification.data?.status === 'rejected' ? '✕ Connection Declined' : ''}
+                                                </span>
                                             </div>
                                         )}
 
