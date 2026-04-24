@@ -797,3 +797,56 @@
   background: linear-gradient(135deg, #0d8b4d, #2bc889);
   transform: scale(1.02);
 }
+
+/* Upcycling Form Styles */
+.upcycle-header {
+  background: linear-gradient(135deg, #9C27B0, #E91E63) !important;
+}
+
+.upcycle-form {
+  margin-bottom: 20px;
+}
+
+.upcycle-form .form-group {
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+.upcycle-form label {
+  display: block;
+  margin-bottom: 5px;
+  color: #555;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.form-select,
+.form-input,
+.form-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+}
+
+.form-select:focus,
+.form-input:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: #9C27B0;
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.upcycle-submit-btn {
+  background: linear-gradient(135deg, #9C27B0, #E91E63) !important;
+}
+
+.upcycle-submit-btn:hover {
+  background: linear-gradient(135deg, #7B1FA2, #C2185B) !important;
+}
