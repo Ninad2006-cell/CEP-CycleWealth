@@ -476,7 +476,22 @@
     align-items: center;
     gap: 4px;
     padding: 8px 16px;
-    background: #0f9d58;
+    background: #0f9d3e;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.order-now-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 16px;
+    background: #3ba221;
     color: white;
     border: none;
     border-radius: 8px;

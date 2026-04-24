@@ -69,13 +69,14 @@ body {
   background: linear-gradient(to right, #0f9d58, #34d399);
 }
 
-.card {
+
+.auth-container .card {
   background: white;
   padding: 40px;
   border-radius: 15px;
-  width: 100%;
-  max-width: 450px;
-  min-width: 320px;
+   width: 90%; 
+   max-width: 450px;
+  min-width: 320px; 
   text-align: center;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
 }

@@ -133,8 +133,8 @@ function SignUp() {
                             value={role} 
                             onChange={(e) => setRole(e.target.value)}
                             style={{
-                                width: "100%",
-                                margin: "10px 0",
+                                // width: "100%",
+                                // margin: "10px 0",
                                 padding: "10px",
                                 borderRadius: "8px",
                                 border: "1px solid #ccc",
@@ -153,9 +153,9 @@ function SignUp() {
                             onClick={getCurrentLocation}
                             disabled={locationLoading}
                             style={{
-                                width: "100%",
+                                // width: "100%",
                                 padding: "10px",
-                                margin: "10px 0",
+                                // margin: "10px 0",
                                 background: "linear-gradient(135deg, #0f9d58, #34d399)",
                                 color: "white",
                                 border: "none",
