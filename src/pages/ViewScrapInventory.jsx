@@ -146,6 +146,7 @@ function ViewScrapInventory() {
             setSelectedStatus(newStatus);
             setSelectedReceiver('');
             setTransactionAmount('');
+            setTransferQuantity(item.weight || '');
             fetchConnectedUsers();
             setShowReceiverModal(true);
             return;
@@ -177,15 +178,28 @@ function ViewScrapInventory() {
             return;
         }
 
-        try {
-            const transferredWeight = parseFloat(selectedItem.weight) || 0;
+        const transferQty = parseFloat(transferQuantity) || 0;
+        const currentWeight = parseFloat(selectedItem.weight) || 0;
 
-            // 1. Update scrap inventory - reduce weight to 0 (transferred out)
+        if (transferQty <= 0) {
+            alert('Please enter a valid quantity to transfer');
+            return;
+        }
+
+        if (transferQty > currentWeight) {
+            alert(`Cannot transfer more than available weight (${currentWeight} kg)`);
+            return;
+        }
+
+        try {
+            const remainingWeight = currentWeight - transferQty;
+
+            // 1. Update scrap inventory - reduce by transferred quantity
             const { error: updateError } = await supabaseClient
                 .from('scrap_inventory')
                 .update({
-                    status: selectedStatus,
-                    weight: 0,
+                    status: remainingWeight > 0 ? 'collected' : selectedStatus,
+                    weight: remainingWeight,
                     last_updated: new Date().toISOString()
                 })
                 .eq('inventory_id', selectedItem.inventory_id);
@@ -199,7 +213,7 @@ function ViewScrapInventory() {
                 receiver_id: selectedReceiver,
                 scrap_inventory_id: selectedItem.inventory_id,
                 transaction_type: selectedStatus === 'send_for_recycling' ? 'recycled' : selectedStatus,
-                weight_transferred: transferredWeight,
+                weight_transferred: transferQty,
                 amount_paid: parseFloat(transactionAmount) || 0,
                 created_at: new Date().toISOString()
             };
@@ -214,10 +228,10 @@ function ViewScrapInventory() {
             }
             console.log('Transaction recorded successfully:', transactionData);
 
-            // 3. Update local state - reduce weight to 0
+            // 3. Update local state - reduce by transferred quantity
             setInventory(prev => prev.map(item =>
                 item.inventory_id === selectedItem.inventory_id
-                    ? { ...item, status: selectedStatus, weight: 0, last_updated: new Date().toISOString() }
+                    ? { ...item, status: remainingWeight > 0 ? 'collected' : selectedStatus, weight: remainingWeight, last_updated: new Date().toISOString() }
                     : item
             ));
 
@@ -225,6 +239,7 @@ function ViewScrapInventory() {
             setSelectedItem(null);
             setSelectedReceiver('');
             setTransactionAmount('');
+            setTransferQuantity('');
         } catch (error) {
             console.error('Error transferring scrap:', error);
             alert('Failed to transfer scrap: ' + error.message);
@@ -236,6 +251,7 @@ function ViewScrapInventory() {
         setSelectedItem(null);
         setSelectedReceiver('');
         setTransactionAmount('');
+        setTransferQuantity('');
     };
 
     const getFilteredAndSortedInventory = () => {
