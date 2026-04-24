@@ -16,6 +16,7 @@ import Artisan from "./pages/Artisan";
 import Enterprise from "./pages/Enterprise";
 import CompanyOrder from "./pages/CompanyOrder";
 import OrderHistory from "./pages/OrderHistory";
+import Transactions from "./pages/Transactions";
 import Order from "./pages/Order";
 import MyOrders from "./pages/MyOrders";
 import CustomerProfile from "./pages/CustomerProfile";
@@ -80,6 +81,7 @@ function App() {
         <Route path="/enterprise" element={<Enterprise />} />
         <Route path="/companyorder" element={<CompanyOrder />} />
         <Route path="/orderhistory" element={<OrderHistory />} />
+        <Route path="/transactions" element={<Transactions />} />
         <Route path="/order" element={<Order />} />
         <Route path="/my-orders" element={<MyOrders />} />
         <Route path="/profile" element={<CustomerProfile />} />
